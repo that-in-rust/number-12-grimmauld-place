@@ -1,0 +1,1 @@
+Write a simple idiomatic Rust program to learn the concept of bases - base of 2, base of 10 in the style of harry potter 
