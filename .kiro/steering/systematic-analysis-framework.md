@@ -159,3 +159,8 @@ This steering document establishes a systematic approach for extracting comprehe
 - Progress tracking and completion verification
 
 This framework ensures comprehensive, rigorous analysis while maintaining systematic progress tracking and quality assurance throughout complex knowledge extraction projects.
+
+
+# Use Folder analysis scripts to check your work and progress 
+
+Use folder analysis script such as /home/amuldotexe/Desktop/Game20250926/number-12-grimmauld-place/scripts/tree-with-wc.sh to constantly check your progress -and you complete a file make a simple git commit with some details on the progress
