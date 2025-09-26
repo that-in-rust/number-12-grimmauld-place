@@ -13,10 +13,10 @@
 
 # It is time to get the best insights for PMF - ONBV : om namo bhagvate vasudevaya
 
-- [ ] 2. Process A Files (5 files)
-  - [ ] 2.1 Analyze A01-README-MOSTIMP.txt: chunk 1 (lines 1-46)
-  - [ ] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 1 (lines 1-1000)
-  - [ ] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 2 (lines 701-1700)
+- [-] 2. Process A Files (5 files)
+  - [x] 2.1 Analyze A01-README-MOSTIMP.txt: chunk 1 (lines 1-46)
+  - [x] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 1 (lines 1-1000)
+  - [-] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 2 (lines 701-1700)
   - [ ] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 3 (lines 1401-2400)
   - [ ] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 4 (lines 2101-3100)
   - [ ] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 5 (lines 2801-3800)
