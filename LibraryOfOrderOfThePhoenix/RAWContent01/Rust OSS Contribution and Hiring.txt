@@ -1,0 +1,839 @@
+Strategic Contribution: A Data-Driven Guide to the Top 100 Rust Repositories for Career Advancement
+
+Introduction - The Rust OSS Ecosystem as a Career Accelerator
+
+The modern software development landscape is characterized by a
+relentless pursuit of performance and reliability. In this context, the
+Rust programming language has emerged as a critical technology, offering
+a compelling combination of speed, memory safety, and high-level
+ergonomics. This unique value proposition has driven its adoption in
+production environments at industry-leading corporations, including
+Amazon Web Services, Google, Huawei, Microsoft, and Mozilla, who are
+also founding members of the Rust Foundation.¹ Rust's core tenets of
+performance, reliability, and productivity make it an ideal choice for
+building foundational software—the critical services, tools, and
+infrastructure upon which other applications depend.³
+
+For the discerning developer, this industry-wide adoption signals a
+significant and growing demand for Rust expertise. Open-source software
+(OSS) provides the most direct and meritocratic avenue for developing
+and demonstrating this expertise. Engaging with the Rust OSS ecosystem
+is not merely a hobby or an act of altruism; it is a deliberate and
+powerful career strategy. A public record of high-quality contributions
+to a reputable project serves as an undeniable, long-form technical
+interview, showcasing not only coding proficiency but also skills in
+collaboration, problem-solving, and navigating complex codebases. This
+report provides a data-driven framework for identifying
+high-return-on-investment (ROI) opportunities within the Rust OSS
+ecosystem, designed to guide a strategic developer in leveraging their
+contributions for maximum career impact.
+
+The methodology employed in this report is analytical and rigorous. It
+moves beyond simple popularity metrics by synthesizing a wide array of
+signals—repository statistics, corporate sponsorship, venture capital
+funding, and active hiring data—to generate proprietary metrics. These
+metrics, the "Reputation Score" and "Probability of Hiring," are
+designed to provide a clear, actionable assessment of where a
+developer's time and talent can be most effectively invested to achieve
+their professional goals. This analysis aims to transform the
+often-chaotic landscape of open source into a structured map of career
+opportunities.
+
+A Framework for Evaluating OSS Career Opportunities
+
+To effectively navigate the Rust OSS ecosystem for career advancement, a
+structured evaluation framework is essential. This framework moves
+beyond surface-level metrics like star counts to provide a
+multi-dimensional view of a project's potential as a career vehicle. The
+following proprietary metrics have been developed to quantify project
+prestige, estimate hiring potential, and gauge overall project health.
+
+The Reputation Score: Quantifying Project Prestige
+
+The Reputation Score is a composite metric, normalized on a scale of 1
+to 100, designed to represent a project's overall prestige and influence
+within the developer community. A higher score indicates a project that
+is widely recognized, respected, and actively maintained, making
+contributions to it more valuable on a resume. The score is calculated
+as a weighted average of several key indicators:
+
+-   GitHub Stars: This is the primary indicator of broad developer
+      interest and approval. A high star count signifies that a project
+      has captured the attention of the community.⁵
+
+-   Fork Count: Forks represent a deeper level of engagement, indicating
+      that developers are not just interested in a project but are
+      actively experimenting with its code, proposing changes, or using
+      it as a foundation for their own work.⁵
+
+-   Contributor Count: The total number of unique contributors is a
+      measure of a project's ability to build and sustain a development
+      community. A large and active contributor base is a strong signal
+      of a healthy, collaborative environment.⁷
+
+-   Influence of Key Personnel: A qualitative bonus is applied to
+      projects led or heavily influenced by highly respected figures in
+      the Rust community. The involvement of core language contributors
+      or creators of seminal libraries (e.g., Andrew Gallant, Niko
+      Matsakis, Mara Bos) lends significant credibility and technical
+      authority to a project.⁴
+
+Probability of Hiring: From Contribution to Employment
+
+The ultimate goal for a strategic contributor is to translate their
+efforts into employment. The "Probability of Hiring" metric categorizes
+repositories into three tiers based on the directness of the path from
+contribution to a paid role.
+
+-   High: This category is reserved for projects that are the core
+      product of a well-funded commercial entity that is actively hiring
+      Rust developers. These are typically venture-backed startups where
+      the line between the open-source project and the company's mission
+      is nonexistent. Signals include a dedicated careers page with
+      relevant Rust roles, significant VC funding rounds, and a clear
+      business model. Contributing to these projects is akin to a
+      direct, public audition for a job. Prime examples include the code
+      editor zed by Zed Industries and the Python toolchain projects uv
+      and ruff by Astral.²⁰
+
+-   Medium: This tier includes projects with strong corporate or
+      foundation backing, where a hiring path exists but may be less
+      direct. This can include projects maintained by a non-profit
+      foundation that hires core maintainers (e.g., the Bevy Foundation)
+      or projects from large tech companies that hire Rust developers
+      for various teams, not exclusively for the specific OSS project.²⁴
+      The connection between a contribution and a job offer is strong
+      but may require more proactive networking.
+
+-   Low: These are typically community-driven, academic, or
+      individual-led "passion projects." While they may be technically
+      excellent and highly reputable, they lack a formal corporate
+      entity or hiring pipeline. Contributions to these projects are
+      immensely valuable for skill development, reputation building, and
+      networking. The career benefits are indirect; the skills and
+      reputation gained are transferable assets that make a developer a
+      more attractive candidate for any Rust position, but there is no
+      direct "contribute-to-hire" pathway within the project itself.
+      Classic examples include ripgrep and nushell.¹⁸
+
+Commit Velocity: A Barometer of Project Health
+
+Commit velocity, measured by the frequency of commits and releases,
+serves as a crucial proxy for a project's overall health and its
+suitability for new contributors.⁷ A repository with high and consistent
+activity indicates several positive attributes:
+
+-   Project Vitality: The project is actively being developed, with new
+      features, bug fixes, and performance improvements being regularly
+      integrated. This signals long-term viability.
+
+-   Maintainer Responsiveness: An active commit log often correlates
+      with responsive maintainers who are more likely to review pull
+      requests, provide feedback, and merge contributions in a timely
+      manner. This is critical for a positive and productive
+      contribution experience.
+
+-   Opportunity Flow: High-velocity projects typically have a constant
+      stream of open issues and a clear roadmap, providing ample
+      opportunities for both new and experienced contributors to find
+      meaningful work.
+
+The landscape of Rust OSS is not monolithic; it represents a spectrum of
+commercialization. At one end are venture-backed startups like Zed
+Industries and Astral, where the OSS project is the product, making the
+path to employment explicit and direct. In the middle are entities like
+Deno Land Inc. and Tauri Apps, which balance corporate goals with strong
+community and foundational elements.²⁷ At the other end are foundational
+community projects like
+
+ripgrep, born from the work of a single, highly skilled individual.¹⁸
+Understanding where a project falls on this spectrum is fundamental to
+aligning one's contribution strategy with their career expectations.
+
+The Landscape: Analysis of Key Rust Project Categories
+
+The most promising Rust repositories for career advancement are not
+randomly distributed but are clustered into distinct technical domains.
+Each domain presents a unique set of technical challenges, market
+demands, and career trajectories. Understanding these categories allows
+a developer to strategically align their personal interests and existing
+skills with the areas of highest growth and opportunity.
+
+Infrastructure & Developer Tooling: The "Python-in-Rust" Gold Rush
+
+A significant and commercially vibrant trend within the Rust ecosystem
+is the rewriting of critical developer tooling from other languages,
+particularly Python and JavaScript. Projects like Astral's uv and ruff,
+and Vercel's swc, are prime examples.⁵ These projects leverage Rust's
+exceptional performance to solve long-standing problems of speed and
+complexity in massive, mature ecosystems.
+
+The market opportunity here is immense. Python and JavaScript power a
+vast portion of the software industry but are often hampered by slow
+linters, formatters, and package managers. Companies like Astral have
+identified that selling a superior developer experience—powered by
+Rust's speed—is a highly viable business model.²² They are well-funded
+and their core mission is to hire Rust engineers to work directly on
+these open-source tools. For a job-seeking contributor, this domain
+represents the most direct and lucrative path to employment.
+Contributions are not just a demonstration of skill; they are a direct
+engagement with the company's primary product, making the contributor a
+known and proven quantity when hiring decisions are made.
+
+Data Engineering & Analytics
+
+Rust's guarantees of memory safety without a garbage collector, combined
+with its raw computational performance, make it an ideal language for
+data-intensive applications. This has led to the rise of a new
+generation of data engineering tools written in Rust that challenge the
+dominance of Python-based solutions like pandas. The most prominent
+example is polars, a high-performance DataFrame library that has rapidly
+gained traction for its speed and expressive API.³⁰
+
+The existence of Polars as a funded company with $4 million in backing
+from top-tier venture capital firms like Accel demonstrates the
+commercial viability of this space.³² The company is actively hiring
+engineers to work on its query engine and performance optimization,
+creating a clear career path for developers with skills in both Rust and
+data systems.³³ Other significant projects in this area include
+
+tikv, a distributed transactional key-value database that forms the
+foundation of TiDB, and a growing ecosystem of other specialized
+databases and data processing libraries.³⁴ This category is ideal for
+developers interested in high-performance computing, query optimization,
+and building the next generation of data analysis tools.
+
+Application Frameworks & UI (Desktop, Web, Game)
+
+Historically viewed as a language for systems-level programming, Rust is
+increasingly being used to build user-facing applications. This "move up
+the stack" is enabled by a maturing ecosystem of powerful application
+frameworks.
+
+-   Desktop Applications: tauri allows developers to build smaller,
+      faster, and more secure cross-platform desktop applications using
+      a web frontend, presenting a modern alternative to frameworks like
+      Electron.⁵
+
+-   Code Editors & IDEs: zed is a high-performance, multiplayer code
+      editor built from the ground up in Rust, pushing the boundaries of
+      what is possible in developer tooling.⁵
+
+-   Game Development: bevy has emerged as the leading data-driven game
+      engine in the Rust ecosystem, praised for its simplicity,
+      performance, and modular architecture.³⁵
+
+-   WebAssembly (Wasm): yew is a component-based framework for creating
+      frontend web applications that compile to WebAssembly, enabling
+      developers to write highly performant web UIs entirely in Rust.³⁷
+
+This trend significantly broadens the scope of a "Rust job." It is no
+longer confined to infrastructure and backend services. Developers can
+now specialize in building rich, interactive applications for the
+desktop, web, or gaming consoles using Rust, opening up career paths in
+product engineering and user experience development.
+
+Web3 & Decentralized Systems
+
+The blockchain and decentralized technology (Web3) space has been a
+major adopter of Rust from its early days. The language's strong
+emphasis on security, correctness, and performance makes it a natural
+fit for building protocols and infrastructure where billions of dollars
+in assets may be at stake. Projects like fuel-core, a full node
+implementation for the Fuel v2 protocol, are indicative of the complex,
+performance-critical work being done in this area.⁵
+
+The influence of key figures from the blockchain world, such as Gavin
+Wood (co-founder of Ethereum and creator of Polkadot), has further
+cemented Rust's position as a premier language for Web3 development.¹⁷
+While this sector can be highly lucrative and offers many opportunities
+for Rust developers, it is also subject to greater market volatility
+compared to more established domains like developer tooling or data
+engineering. It is a high-risk, high-reward area for those interested in
+the cutting edge of distributed systems and cryptography.
+
+The Top 100 Rust Repositories for Strategic Contribution
+
+The following table provides a comprehensive, data-driven ranking of 100
+Rust repositories evaluated against the framework outlined in the
+previous section. It is designed to be a primary tool for strategic
+decision-making, allowing a developer to identify projects that best
+align with their skills, interests, and career objectives.
+
+How to Use This Table:
+
+-   Repository: The name of the project and its owner, linked to the
+      GitHub repository.
+
+-   Description: A brief summary of the project's purpose.
+
+-   Reputation Score (1-100): A composite metric of project prestige,
+      combining stars, forks, and contributor counts. Higher is better.
+
+-   Probability of Hiring (Low, Medium, High): An assessment of the
+      directness of the path from contribution to employment with a
+      related company or foundation.
+
+-   Primary Skill Set: The core technical domains and competencies
+      required to contribute effectively.
+
+-   Commit Velocity: A qualitative assessment of project activity (High,
+      Medium, Low), often supplemented with release frequency data. This
+      serves as a proxy for maintainer responsiveness and the
+      availability of contribution opportunities.
+
+-   Key Contributors: Notable creators, maintainers, or influential
+      figures associated with the project. Their presence often
+      indicates strong technical leadership.
+
+-   Sponsoring Companies / Foundation: The primary commercial or
+      non-profit entities backing the project. This is a key input for
+      the "Probability of Hiring" score.
+
+  Rank   Repository                        Description                                                                                                                 Reputation Score   Probability of Hiring   Primary Skill Set                                        Commit Velocity               Key Contributors                                   Sponsoring Companies / Foundation
+  ------ --------------------------------- --------------------------------------------------------------------------------------------------------------------------- ------------------ ----------------------- -------------------------------------------------------- ----------------------------- -------------------------------------------------- --------------------------------------
+  1      denoland/deno                     A modern runtime for JavaScript and TypeScript. ⁵                                                                           100                High                    Runtimes, V8, Tokio, Async Rust, TypeScript              High / Frequent Releases ⁷    Ryan Dahl, Bartek Iwańczuk                         Deno Land Inc. ²⁷
+  2      tauri-apps/tauri                  Build smaller, faster, and more secure desktop applications with a web frontend. ⁵                                          99                 High                    Desktop Apps, Webview, UI/UX, JavaScript/TS Interop      High / Frequent Releases ⁸    Daniel Thompson-Yvetot, Lucas Fernandes Nogueira   CrabNebula, Tauri Foundation ⁸
+  3      rustdesk/rustdesk                 An open-source remote desktop application. ⁵                                                                                98                 Medium                  Desktop Apps, Networking, UI (Flutter), Cross-Platform   High / Frequent Releases ⁹    N/A                                                Purslane Ltd. ⁴¹
+  4      astral-sh/uv                      An extremely fast Python package and project manager. ⁵                                                                     97                 High                    Python Ecosystem, CLI Tools, Async Rust, Performance     High / Frequent Releases ¹⁰   Andrew Gallant (BurntSushi)                        Astral ²²
+  5      zed-industries/zed                A high-performance, multiplayer code editor. ⁵                                                                              96                 High                    Desktop Apps, UI/UX, GPUI, Real-time Collaboration       High / Frequent Releases ¹¹   Nathan Sobo, Max Brunsfeld                         Zed Industries ²⁰
+  6      FuelLabs/sway                     Smart contract language for the Fuel VM. ⁵                                                                                  95                 Medium                  Compilers, Blockchain, Web3, DSL Design                  High                          N/A                                                Fuel Labs ⁶
+  7      alacritty/alacritty               A cross-platform, OpenGL terminal emulator. ⁵                                                                               94                 Low                     Terminal Emulators, Graphics (OpenGL), Performance       Medium                        Joe Wilm, Christian Duerr                          Community-driven
+  8      BurntSushi/ripgrep                A line-oriented search tool that recursively searches directories for a regex pattern. ⁵                                    93                 Low                     CLI Tools, Regex, Performance, File I/O                  Low                           Andrew Gallant (BurntSushi)                        Individual-led
+  9      meilisearch/meilisearch           A lightning-fast search engine API. ⁵                                                                                       92                 High                    Search Engines, Databases, HTTP APIs, Performance        High / Frequent Releases ¹³   Clément Renault, Quentin de Quelen                 Meilisearch ⁴²
+  10     starship/starship                 The minimal, blazing-fast, and infinitely customizable prompt for any shell. ⁵                                              91                 Low                     CLI Tools, Shells, Configuration                         Medium                        Matan Kushner                                      Community-driven
+  11     typst/typst                       A new markup-based typesetting system. ⁵                                                                                    90                 Medium                  Compilers, Typesetting, Document Layout, Fonts           High                          Laurenz Mädje, Martin Haug                         N/A
+  12     astral-sh/ruff                    An extremely fast Python linter and code formatter. ⁵                                                                       89                 High                    Python Ecosystem, Linters, ASTs, Performance             High                          Charlie Marsh                                      Astral ²²
+  13     bevyengine/bevy                   A refreshingly simple data-driven game engine. ⁵                                                                            88                 Medium                  Game Development, ECS, Graphics, 2D/3D Rendering         High / ~3 Month Cycle ¹²      Carter Anderson                                    Bevy Foundation ²⁴
+  14     helix-editor/helix                A post-modern modal text editor. ⁵                                                                                          87                 Low                     Text Editors, TUI, Tree-sitter                           High                          Blaž Hrastnik                                      Community-driven
+  15     pola-rs/polars                    Dataframes powered by a multithreaded, vectorized query engine. ⁵                                                           86                 High                    Dataframes, Data Science, Query Engines, Arrow           High / Weekly Releases ¹⁵     Ritchie Vink                                       Polars ³²
+  16     sharkdp/fd                        A simple, fast and user-friendly alternative to 'find'. ⁵                                                                   85                 Low                     CLI Tools, File Systems, Performance                     Low                           David Peter                                        Individual-led
+  17     lapce/lapce                       Lightning-fast and Powerful Code Editor. ⁵                                                                                  84                 Medium                  Text Editors, UI/UX, GPUI, Plugins                       High                          Dongdong Zhou                                      N/A
+  18     nushell/nushell                   A new type of shell. ⁵                                                                                                      83                 Low                     Shells, CLI, Parsers, Structured Data                    High / Frequent Releases ¹⁶   Jonathan Turner, Andres N. Robalino                Community-driven
+  19     swc-project/swc                   Rust-based platform for the Web. ⁵                                                                                          82                 High                    Compilers, JavaScript/TS, ASTs, Web Tooling              High                          DongYoon Kang                                      Vercel
+  20     yewstack/yew                      Rust / Wasm framework for creating reliable and efficient web applications. ⁵                                               81                 Medium                  WebAssembly, Frontend, UI/UX, Component Architecture     Medium ¹⁴                     Hamza Jasim                                        Community / Yewstack Org
+  21     influxdata/influxdb               Scalable datastore for metrics, events, and real-time analytics. ⁵                                                          80                 High                    Databases, Time Series, Distributed Systems              High                          N/A                                                InfluxData
+  22     tokio-rs/tokio                    A runtime for writing reliable asynchronous applications with Rust. ⁴³                                                      79                 Medium                  Async Rust, Networking, Runtimes                         High                          Carl Lerche, Eliza Weisman                         N/A
+  23     diesel-rs/diesel                  A safe, extensible ORM and Query Builder for Rust. ⁴³                                                                       78                 Low                     Databases, ORM, SQL, Macros                              Medium                        Sean Griffin                                       Community-driven
+  24     actix/actix-web                   A powerful, pragmatic, and extremely fast web framework for Rust. ⁴³                                                        77                 Low                     Web Frameworks, HTTP, Async Rust                         Medium                        Nikolay Kim                                        Community-driven
+  25     hyperium/hyper                    A fast and correct HTTP library for Rust.                                                                                   76                 Low                     HTTP, Networking, Async Rust                             Medium                        Sean McArthur                                      Community-driven
+  26     tikv/tikv                         A distributed KV database in Rust. ³⁴                                                                                       75                 High                    Databases, Distributed Systems, Raft, KV Stores          High                          N/A                                                PingCAP, CNCF
+  27     rust-lang/rust-analyzer           A Rust compiler front-end for IDEs. ⁴⁴                                                                                      74                 Medium                  IDEs, Compilers, LSP, Developer Tools                    High                          Aleksey Kladov (matklad)                           Rust Project
+  28     serde-rs/serde                    A generic serialization/deserialization framework. ⁴⁵                                                                       73                 Low                     Serialization, Macros, Data formats                      Medium                        David Tolnay (dtolnay)                             Individual-led
+  29     clap-rs/clap                      A full featured, fast Command Line Argument Parser for Rust. ⁴⁶                                                             72                 Low                     CLI, Argument Parsing, Macros                            Medium                        Kevin K.                                           Community-driven
+  30     async-graphql/async-graphql       A GraphQL server library implemented in Rust.                                                                               71                 Low                     GraphQL, Web, Async Rust                                 Medium                        Sunli                                              Community-driven
+  31     SeaQL/sea-orm                     🐚 An async & dynamic ORM for Rust                                                                                           70                 Low                     Databases, ORM, Async Rust                               High                          Chris Tsang                                        Community-driven
+  32     MaterializeInc/materialize        The streaming database for real-time analytics.                                                                             69                 High                    Databases, Streaming, SQL, Dataflow                      High                          Frank McSherry                                     Materialize, Inc.
+  33     surrealdb/surrealdb               A scalable, distributed, collaborative, document-graph database. ³⁴                                                         68                 High                    Databases, NoSQL, GraphDB, Distributed Systems           High                          Tobie Morgan Hitchcock                             SurrealDB Ltd.
+  34     risingwavelabs/risingwave         The streaming database: SQL stream processing with Postgres-like experience. ³⁴                                             67                 High                    Databases, Streaming, SQL, Distributed Systems           High                          N/A                                                RisingWave Labs
+  35     solana-labs/solana                Web-Scale Blockchain for fast, secure, scalable, decentralized apps and marketplaces.                                       66                 High                    Blockchain, Web3, Distributed Systems, Performance       High                          Anatoly Yakovenko                                  Solana Foundation, Solana Labs
+  36     paritytech/polkadot-sdk           The SDK for building blockchains.                                                                                           65                 High                    Blockchain, Web3, Substrate, Networking                  High                          Gavin Wood                                         Parity Technologies, Web3 Foundation
+  37     wasmerio/wasmer                   The leading WebAssembly Runtime supporting WASI and Emscripten.                                                             64                 High                    WebAssembly, Runtimes, WASI, Compilers                   High                          Syrus Akbary                                       Wasmer, Inc.
+  38     esp-rs/esp-idf-hal                embedded-hal implementations for Espressif SoCs.                                                                            63                 Medium                  Embedded, Hardware, IoT, no_std                          High                          N/A                                                Espressif
+  39     huggingface/candle                Minimalist ML framework for Rust.                                                                                           62                 High                    Machine Learning, AI, Linear Algebra, GPU (CUDA)         High                          N/A                                                Hugging Face
+  40     launchbadge/sqlx                  🧰 The Rust SQL Toolkit. An async, pure Rust SQL crate. ⁴⁶                                                                   61                 Low                     Databases, SQL, Async Rust                               Medium                        N/A                                                Community-driven
+  41     tower-rs/tower                    A library of modular and reusable components for building robust networking clients and servers.                            60                 Low                     Networking, Middleware, Async Rust                       Medium                        N/A                                                Tokio project
+  42     image-rs/image                    Encoding and decoding images in Rust.                                                                                       59                 Low                     Image Processing, Codecs, Graphics                       Medium                        N/A                                                Community-driven
+  43     ggez/ggez                         A lightweight game framework for making 2D games with minimum friction. ²                                                   58                 Low                     Game Development, 2D Graphics                            Medium                        N/A                                                Community-driven
+  44     gfx-rs/wgpu                       Safe and portable GPU abstraction in Rust, implementing WebGPU API.                                                         57                 Medium                  Graphics, GPU, WebGPU, Rendering                         High                          N/A                                                Mozilla, Google
+  45     rust-windowing/winit              A cross-platform window creation and event loop management library in Rust.                                                 56                 Low                     Windowing, GUI, Cross-Platform                           High                          N/A                                                Community-driven
+  46     emilk/egui                        An easy-to-use immediate mode GUI in Rust that runs on both web and native. ⁴⁷                                              55                 Medium                  GUI, UI/UX, Immediate Mode                               High                          Emil Ernerfeldt                                    Individual-led
+  47     dtolnay/syn                       A parser for Rust source code.                                                                                              54                 Low                     Macros, Compilers, Parsers                               Medium                        David Tolnay (dtolnay)                             Individual-led
+  48     rayon-rs/rayon                    A data parallelism library for Rust. ⁴⁸                                                                                     53                 Low                     Concurrency, Parallelism, Performance                    Low                           Niko Matsakis, Josh Triplett                       Community-driven
+  49     crossbeam-rs/crossbeam            Tools for concurrent programming in Rust. ⁴⁸                                                                                52                 Low                     Concurrency, Data Structures, Performance                Medium                        Aaron Turon, Stjepan Glavina                       Community-driven
+  50     PyO3/PyO3                         Rust bindings for the Python interpreter. ⁴⁸                                                                                51                 Medium                  Python Interop, FFI, Bindings                            High                          N/A                                                Community-driven
+  51     axum-rs/axum                      Ergonomic and modular web framework built with Tokio, Tower, and Hyper. ⁴⁶                                                  50                 Low                     Web Frameworks, HTTP, Async Rust                         High                          N/A                                                Tokio project
+  52     seanmonstar/reqwest               An ergonomic, batteries-included HTTP Client for Rust. ⁴⁶                                                                   49                 Low                     HTTP, Networking, Async Rust                             Medium                        Sean McArthur                                      Individual-led
+  53     chronotope/chrono                 Date and time library for Rust.                                                                                             48                 Low                     Date/Time, Standard Library                              Low                           N/A                                                Community-driven
+  54     rand-rs/rand                      A Rust library for random number generation.                                                                                47                 Low                     Random Numbers, Cryptography, Algorithms                 Low                           N/A                                                Rust-random project
+  55     rust-lang/cargo                   The Rust package manager. ⁴⁴                                                                                                46                 Medium                  Build System, Package Management, Developer Tools        High                          Alex Crichton, Yehuda Katz                         Rust Project
+  56     rust-lang/rustlings               Small exercises to get you used to reading and writing Rust code. ⁵                                                         45                 Low                     Education, Learning, Exercises                           Medium                        Carol Nichols                                      Rust Project
+  57     console-rs/console                A toolkit for building command-line interfaces in Rust. ⁴⁶                                                                  44                 Low                     CLI, TUI, Terminal                                       Medium                        Armin Ronacher                                     Individual-led
+  58     redox-os/redox                    A Unix-like Operating System written in Rust. ⁴⁹                                                                            43                 Low                     Operating Systems, Microkernels, Systems Programming     Medium                        Jeremy Soller                                      Community-driven
+  59     gleam-lang/gleam                  ⭐️ A friendly language for building type-safe, scalable systems!                                                            42                 Medium                  Compilers, Programming Languages, BEAM (Erlang VM)       High                          Louis Pilfold                                      N/A
+  60     vercel/turbo                      A high-performance build system for JavaScript and TypeScript codebases.                                                    41                 High                    Build System, JavaScript/TS, Monorepos, Performance      High                          Jared Palmer                                       Vercel
+  61     TheAlgorithms/Rust                All Algorithms implemented in Rust.                                                                                         40                 Low                     Algorithms, Data Structures, Education                   Medium                        N/A                                                Community-driven
+  62     getsentry/sentry-rust             Sentry SDK for Rust.                                                                                                        39                 High                    Error Monitoring, SDKs, Telemetry                        High                          Armin Ronacher                                     Sentry
+  63     qdrant/qdrant                     Vector Database for the next generation of AI applications. ³⁴                                                              38                 High                    Databases, Vector Search, AI/ML, Search Engines          High                          N/A                                                Qdrant
+  64     apache/arrow-rs                   Official Rust implementation of Apache Arrow.                                                                               37                 Medium                  Data Formats, Arrow, Data Engineering                    High                          N/A                                                Apache Software Foundation
+  65     datafuselabs/databend             A Modern Real-Time Data Processing & Analytics DBMS with Cloud-Native Architecture. ³⁴                                      36                 High                    Databases, Data Warehouse, SQL, Cloud                    High                          N/A                                                Datafuse Labs
+  66     spacedriveapp/spacedrive          A file explorer, from the future.                                                                                           35                 Medium                  Desktop Apps, File Systems, Distributed Systems, UI/UX   High                          N/A                                                N/A
+  67     neondatabase/neon                 Serverless Postgres. We separated storage and compute. ³⁴                                                                   34                 High                    Databases, Postgres, Cloud, Serverless                   High                          N/A                                                Neon, Inc.
+  68     firecracker-microvm/firecracker   Secure and fast microVMs for serverless computing.                                                                          33                 High                    Virtualization, MicroVMs, Cloud, Security                High                          N/A                                                Amazon Web Services (AWS)
+  69     bottlerocket-os/bottlerocket      An operating system designed for hosting containers.                                                                        32                 High                    Operating Systems, Containers, Linux, Security           High                          N/A                                                Amazon Web Services (AWS)
+  70     cloudflare/quiche                 🥧 Savoury implementation of the QUIC transport protocol and HTTP/3.                                                         31                 High                    Networking, QUIC, HTTP/3, Cryptography                   High                          N/A                                                Cloudflare
+  71     slint-ui/slint                    Slint is a declarative GUI toolkit to build native user interfaces for applications.                                        30                 High                    GUI, UI/UX, Embedded, Desktop Apps                       High                          N/A                                                Slint GmbH
+  72     napi-rs/napi-rs                   A framework for building pre-compiled Node.js addons in Rust.                                                               29                 Medium                  Node.js Interop, FFI, Performance                        High                          LongYinan                                          N/A
+  73     extrawurst/gitui                  Blazing 💥 fast terminal-ui for git written in Rust 🦀                                                                        28                 Low                     CLI, TUI, Git, Developer Tools                           Medium                        Stephan Dilly                                      Individual-led
+  74     cberner/redb                      An embedded key-value store in Rust.                                                                                        27                 Low                     Databases, Embedded, KV Stores                           Medium                        Christopher Berner                                 Individual-led
+  75     ratatui-org/ratatui               A Rust library to build rich Terminal User Interfaces (TUIs).                                                               26                 Low                     TUI, CLI, UI/UX                                          High                          N/A                                                Community-driven
+  76     rust-embedded/discovery           Discover the world of embedded Rust!                                                                                        25                 Low                     Embedded, Learning, Hardware                             Low                           N/A                                                Rust Embedded WG
+  77     leptos-rs/leptos                  Build fast web applications with Rust.                                                                                      24                 Medium                  WebAssembly, Frontend, UI/UX, Web Frameworks             High                          Greg Johnston                                      N/A
+  78     dioxuslabs/dioxus                 Fullstack GUI library for web, desktop, mobile, and more.                                                                   23                 Medium                  GUI, UI/UX, Web, Desktop, Mobile                         High                          Jonathan Kelley                                    N/A
+  79     shuttle-hq/shuttle                Build & ship backends without writing any infrastructure files.                                                             22                 High                    Cloud, PaaS, Backend, Web Services                       High                          N/A                                                Shuttle
+  80     GreptimeTeam/greptimedb           An open-source, cloud-native, distributed time-series database. ³⁴                                                          21                 High                    Databases, Time Series, Cloud, SQL                       High                          N/A                                                Greptime
+  81     juspay/hyperswitch                An open source payments switch to make payments fast, reliable and affordable. ⁵⁰                                           20                 High                    FinTech, Payments, Backend                               High                          N/A                                                Juspay
+  82     openobserve/openobserve           🚀 10x easier, 🚀 140x lower storage cost, 🚀 high performance, 🚀 petabyte scale - Elasticsearch/Splunk/Datadog alternative.   19                 High                    Observability, Logs, Metrics, Traces, Search             High                          N/A                                                OpenObserve
+  83     tree-sitter/tree-sitter           An incremental parsing system for programming tools.                                                                        18                 Medium                  Parsers, Compilers, Developer Tools                      High                          Max Brunsfeld                                      GitHub
+  84     roc-lang/roc                      A fast, friendly, functional language.                                                                                      17                 Medium                  Compilers, Programming Languages, Functional             High                          Richard Feldman                                    N/A
+  85     ruffle-rs/ruffle                  A Flash Player emulator written in Rust. ⁵¹                                                                                 16                 Medium                  Emulators, WebAssembly, Graphics                         High                          N/A                                                N/A
+  86     cube-js/cube                      📊 Cube — The Semantic Layer for Building Data Apps.                                                                         15                 High                    Data Analytics, BI, SQL, API                             High                          N/A                                                Cube Dev, Inc.
+  87     valeriansaliou/sonic              🦔 Fast, lightweight & schema-less search backend.                                                                           14                 Low                     Search Engines, Performance, Indexing                    Low                           Valerian Saliou                                    Individual-led
+  88     poem-web/poem                     A full-featured and easy-to-use web framework with the Rust programming language. ⁴⁹                                        13                 Low                     Web Frameworks, HTTP, Async Rust                         Medium                        N/A                                                Community-driven
+  89     quickwit-oss/quickwit             Cloud-native search engine for log management.                                                                              12                 High                    Search Engines, Logs, Observability, Cloud               High                          N/A                                                Quickwit, Inc.
+  90     kata-containers/kata-containers   A secure container runtime with lightweight virtual machines.                                                               11                 High                    Containers, Virtualization, Security, Cloud              High                          N/A                                                OpenInfra Foundation
+  91     linkerd/linkerd2-proxy            The world's fastest, lightest service mesh proxy.                                                                           10                 High                    Service Mesh, Networking, Cloud Native, gRPC             High                          N/A                                                CNCF, Buoyant
+  92     wez/wezterm                       A GPU-accelerated cross-platform terminal emulator and multiplexer.                                                         9                  Low                     Terminal Emulators, GPU, TUI                             High                          Wez Furlong                                        Individual-led
+  93     zellij-org/zellij                 A terminal workspace with batteries included.                                                                               8                  Low                     Terminal, TUI, Developer Tools                           High                          N/A                                                Community-driven
+  94     ClementTsang/bottom               Yet another cross-platform graphical process/system monitor.                                                                7                  Low                     CLI, TUI, System Monitoring                              Medium                        Clement Tsang                                      Individual-led
+  95     ogham/exa                         A modern replacement for ls. (Archived, see eza-community/eza)                                                              6                  Low                     CLI, File Systems                                        Inactive                      Benjamin Sago                                      Individual-led
+  96     dandavison/delta                  A syntax-highlighting pager for git, diff, and grep output.                                                                 5                  Low                     CLI, Git, Diffing, Syntax Highlighting                   Medium                        Dan Davison                                        Individual-led
+  97     ajeetdsouza/zoxide                A smarter cd command. Supports all major shells.                                                                            4                  Low                     CLI, Shells, Productivity                                Medium                        Ajeet D'Souza                                      Individual-led
+  98     systeminit/si                     The System Initiative software.                                                                                             3                  High                    DevOps, IaC, Cloud, Distributed Systems                  High                          Adam Jacob                                         System Initiative
+  99     atuinsh/atuin                     ✨ Magical Shell History                                                                                                     2                  Medium                  CLI, Shells, Databases (SQLite), Sync                    High                          Ellie Huxtable                                     N/A
+  100    Ogeon/palette                     A Rust library for linear color calculations and conversion.                                                                1                  Low                     Color Science, Graphics, Math                            Low                           N/A                                                Community-driven
+
+Deep Dive: Profiles of Premier "Hire-Me" Projects
+
+While the comprehensive table provides a broad overview, a deeper
+analysis of the highest-potential projects reveals the specific nature
+of the opportunities they present. The following profiles examine a
+selection of repositories with a "High" probability of hiring, detailing
+their corporate backing, strategic value, and the types of skills they
+demand.
+
+astral-sh/uv & astral-sh/ruff
+
+-   Corporate Backing: These projects are the flagship products of
+      Astral, a company with a clear mission to build high-performance
+      developer tools for the Python ecosystem.²² Astral is a
+      well-defined corporate entity, distinguishing it from
+      community-led or foundation-backed efforts.
+
+-   Hiring Signals: Astral maintains an active careers page with
+      explicit postings for "Open Source Software Engineer" roles,
+      sometimes specifically mentioning uv.²³ This is the most direct
+      hiring signal possible, indicating that the company's growth is
+      directly tied to hiring engineers to work on its open-source
+      codebases.
+
+-   Key Personnel: The projects are led by prominent figures in the Rust
+      community, most notably Andrew Gallant (handle: BurntSushi), the
+      creator of ripgrep and the regex crate.¹⁸ Working on these
+      projects offers the opportunity to collaborate with and learn from
+      world-class engineers.
+
+-   Strategic Value: These repositories are the epicenter of the
+      "Python-in-Rust" trend. For a developer with skills in both Python
+      and Rust, contributing here is the most direct possible audition
+      for a role at Astral. The work involves deep knowledge of the
+      Python packaging ecosystem, command-line tool design, asynchronous
+      Rust for I/O-bound tasks, and relentless performance optimization.
+      A merged pull request is a tangible asset that demonstrates
+      precisely the skills the company is hiring for.
+
+zed-industries/zed
+
+-   Corporate Backing: zed is developed by Zed Industries, a
+      venture-backed startup that has raised $42 million in funding,
+      including a Series B round.²⁰ This level of funding indicates
+      significant commercial ambition and the resources to build a large
+      engineering team.
+
+-   Hiring Signals: Zed Industries has a dedicated and detailed jobs
+      page listing multiple, specific Rust engineering roles, including
+      positions focused on AI integration, backend systems, and Linux
+      desktop development.²¹ This demonstrates a clear and immediate
+      need for Rust talent across various specializations.
+
+-   Key Personnel: The company was founded by Nathan Sobo and Max
+      Brunsfeld, key figures behind the development of the Atom editor
+      and the Tree-sitter parsing library at GitHub.²⁰ This provides the
+      project with immense credibility and a deep well of experience in
+      building developer tools.
+
+-   Strategic Value: zed is a premier target for developers interested
+      in high-performance application development. The project's focus
+      on GPU-accelerated UI, real-time collaboration, and AI integration
+      presents a rich set of complex and modern engineering challenges.
+      Contributions can demonstrate skills in UI/UX, graphics
+      programming, distributed systems, and the application of AI,
+      making a contributor a highly attractive candidate for a role at
+      the company.
+
+pola-rs/polars
+
+-   Corporate Backing: The polars library is commercially supported by a
+      Dutch company of the same name, which has successfully raised $4
+      million in a seed round from top-tier venture capital firms,
+      including Accel and Bain Capital Ventures.³²
+
+-   Hiring Signals: The company's careers page lists open positions for
+      Software Engineers specializing in performance and query engines,
+      indicating a focus on hiring for the core development of the
+      library.³³ The broader job market also shows a high demand for
+      engineers with Polars experience in data-centric roles.⁵²
+
+-   Strategic Value: polars is the leading project for a developer
+      seeking a career at the intersection of Rust and data science. It
+      is rapidly becoming the high-performance successor to Python's
+      pandas library. Contributing to polars requires and demonstrates
+      highly sought-after skills in data structures, query optimization,
+      the Apache Arrow memory format, and building efficient, parallel
+      algorithms. It is a direct pathway to a role at the core company
+      or a data engineering position at any number of companies adopting
+      Polars for their data pipelines.
+
+denoland/deno
+
+-   Corporate Backing: deno is developed by Deno Land Inc., a company
+      backed by prominent investors like Sequoia Capital.²⁷ The company
+      is building commercial services on top of the open-source runtime,
+      creating a sustainable business model.
+
+-   Hiring Signals: The company has a history of hiring software
+      engineers to work on the runtime and its associated cloud
+      services.⁵⁴ While job openings may fluctuate, the corporate
+      structure ensures a recurring need for Rust and systems
+      programming talent.
+
+-   Key Personnel: The project was created by Ryan Dahl, the original
+      creator of Node.js. This lineage gives deno immense industry
+      recognition and technical authority.
+
+-   Strategic Value: As a modern JavaScript and TypeScript runtime, deno
+      is a foundational piece of web infrastructure. Contributing to it
+      demonstrates expertise in building language runtimes, deep
+      asynchronous programming with Tokio, and integration with the V8
+      JavaScript engine. These are rare and valuable skills that are
+      applicable not only at Deno Land Inc. but also at any company
+      building low-level, high-performance web infrastructure.
+
+bevyengine/bevy
+
+-   Foundation Backing: bevy is not owned by a traditional for-profit
+      company but is supported by the Bevy Foundation, a non-profit
+      organization dedicated to advancing the engine.²⁴ This model
+      ensures the project remains free and open-source forever.
+
+-   Hiring Signals: The hiring path for bevy is classified as "Medium"
+      because it is less direct than that of a VC-backed startup. The
+      Bevy Foundation's mission includes funding and hiring core
+      maintainers to work on the engine full-time, creating paid
+      opportunities within the project itself.²⁵ Furthermore, the
+      growing ecosystem of game studios and companies using Bevy for
+      simulations and applications creates a secondary job market for
+      developers with proven Bevy expertise.⁵⁶
+
+-   Strategic Value: bevy is the definitive entry point for a career in
+      Rust-based game development. It is the most popular and active
+      game engine in the ecosystem. Contributions require and
+      demonstrate a strong understanding of Entity Component System
+      (ECS) architecture, 2D/3D graphics pipelines, and real-time
+      application design. Building a public portfolio of contributions
+      to Bevy is the most effective way to signal expertise to potential
+      employers in the Rust gamedev industry.
+
+A Strategic Guide to Effective Contribution and Career Leverage
+
+Possessing a comprehensive list of high-potential repositories is the
+first step. The next, more critical step is to translate this data into
+a concrete strategy for contribution and career growth. This involves
+selecting the right target, engaging with the community effectively, and
+leveraging contributions as a tangible career asset.
+
+Choosing Your Target: Aligning Skills with Opportunity
+
+The primary table in this report is a tool for strategic filtering. A
+developer should approach it not as a simple ranking but as a database
+to be queried based on personal career goals. The selection process
+should be guided by a combination of factors:
+
+1.  Desired Career Domain: The first filter should be the developer's
+      target industry. An interest in data engineering should
+      immediately draw attention to projects like polars, tikv, and
+      materialize. A passion for game development points toward bevy. A
+      desire to work on developer tools suggests focusing on uv, zed, or
+      rust-analyzer.
+
+2.  Existing Skill Set: Leverage existing expertise to accelerate the
+      initial contribution process. A developer with a strong background
+      in Python will find the barrier to entry lower for projects like
+      uv or polars, as they will already understand the problem domain
+      intimately. An expert in JavaScript and web toolchains will be
+      well-equipped to contribute to deno or swc.
+
+3.  Hiring Urgency: The "Probability of Hiring" column is a crucial
+      filter for those with an immediate goal of finding employment.
+      Prioritizing projects in the "High" category significantly
+      increases the chances of a contribution leading directly to an
+      interview. For those with a longer-term strategy of
+      skill-building, "Medium" or even "Low" probability projects with
+      high reputation scores can be excellent choices.
+
+The Contribution Ladder: From First PR to Trusted Contributor
+
+Meaningful contribution goes beyond fixing typos or tackling the
+simplest "good first issues." While these are valuable for learning a
+project's workflow, the goal is to climb the contribution ladder and
+demonstrate a deeper level of engagement and technical capability.
+
+-   Move Beyond the Trivial: After one or two introductory tasks,
+      actively seek out more complex bugs or the implementation of
+      small, well-defined features. This demonstrates an ability to read
+      and understand a larger portion of the codebase and to reason
+      about its architecture.
+
+-   Master the Art of Communication: A well-crafted pull request is more
+      than just code; it is a piece of technical communication. It
+      should include a clear description of the problem, a detailed
+      explanation of the solution, and thorough testing. Engaging
+      constructively in code reviews and design discussions, whether on
+      GitHub or Discord, is as important as the code itself. Projects
+      like Bevy explicitly encourage participation in RFC (Request for
+      Comments) processes for major decisions, providing a forum to
+      demonstrate design and architecture skills.¹²
+
+-   Build a Relationship with Maintainers: Over time, consistent,
+      high-quality contributions build trust. Responsive, helpful, and
+      technically sound contributors become known quantities to the
+      project's maintainers—the very people who are often employees of
+      the sponsoring company and key influencers in hiring decisions.
+
+From Contributor to Candidate: Monetizing Your Reputation
+
+In the modern technical hiring landscape, particularly within
+commercially-backed open source, a developer's GitHub profile has become
+their most potent resume. It is a public, verifiable record of their
+skills, work ethic, and ability to collaborate. The final step of the
+strategy is to explicitly leverage this record.
+
+The shift towards a "contribute-to-hire" model means that hiring
+managers at companies like Astral, Zed Industries, and Polars are not
+just posting jobs; they are actively observing their own project's
+contributor pool. A history of merged pull requests is more persuasive
+and carries more weight than any self-reported skill on a traditional
+resume. This transforms the hiring process from an application into a
+conversation.
+
+To maximize this effect, a developer should:
+
+-   Curate Their Public Profile: Ensure their GitHub profile is
+      professional and highlights key contributions. Pin the most
+      significant repositories and write clear commit messages and PR
+      descriptions that can be easily understood by a future reviewer.
+
+-   Articulate Contributions in Interviews: When interviewing, be
+      prepared to discuss OSS contributions in depth. The conversation
+      should focus not just on the technical implementation (the
+      "what"), but on the entire process: how the issue was diagnosed,
+      the design trade-offs considered, the feedback incorporated from
+      code reviews, and the overall impact of the change (the "how" and
+      "why"). This frames the contribution as a complete project,
+      showcasing a full range of engineering skills.
+
+-   Feature OSS on Your Resume: List key OSS projects under an "Open
+      Source Contributions" section. Instead of simply naming the
+      project, describe the contribution and its impact. For example:
+      "Polars (pola-rs/polars): Implemented a new parallel algorithm for
+      string-to-datetime conversion, resulting in a 3x performance
+      improvement. (See PR #1234)." This provides a direct, verifiable
+      claim of impact.
+
+By treating open source as a strategic endeavor—selecting the right
+projects, contributing meaningfully, and skillfully presenting that
+work—a developer can build a powerful and undeniable case for their
+expertise, turning their passion for code into a direct and accelerated
+path to a premier job in the Rust ecosystem.
+
+Works cited
+
+1.  Rust (programming language) - Wikipedia, accessed on September 1,
+      2025, https://en.wikipedia.org/wiki/Rust_(programming_language)
+
+2.  Awesome Rust | LibHunt, accessed on September 1, 2025,
+      https://rust.libhunt.com/
+
+3.  Rust Programming Language, accessed on September 1, 2025,
+      https://www.rust-lang.org/
+
+4.  From Systems Programming to Foundational Software: 10 Years of Rust
+      with Niko Matsakis (Live Podcast) - Reddit, accessed on September
+      1, 2025,
+      https://www.reddit.com/r/rust/comments/1kyfbtk/from_systems_programming_to_foundational_software/
+
+5.  Top 100 Stars in Rust - Github Ranking | Github-Ranking, accessed on
+      September 1, 2025,
+      https://evanli.github.io/Github-Ranking/Top100/Rust.html
+
+6.  TOP 61 Rust Open Source Projects in 2025 - Web3 Jobs, accessed on
+      September 1, 2025,
+      https://web3.career/learn-web3/top-rust-open-source-projects
+
+7.  denoland/deno: A modern runtime for JavaScript and ... - GitHub,
+      accessed on September 1, 2025, https://github.com/denoland/deno
+
+8.  tauri-apps/tauri: Build smaller, faster, and more secure ... -
+      GitHub, accessed on September 1, 2025,
+      https://github.com/tauri-apps/tauri
+
+9.  rustdesk/rustdesk: An open-source remote desktop ... - GitHub,
+      accessed on September 1, 2025,
+      https://github.com/rustdesk/rustdesk
+
+10. astral-sh/uv: An extremely fast Python package and project ... -
+      GitHub, accessed on September 1, 2025,
+      https://github.com/astral-sh/uv
+
+11. zed-industries/zed: Code at the speed of thought – Zed is a ... -
+      GitHub, accessed on September 1, 2025,
+      https://github.com/zed-industries/zed
+
+12. bevyengine/bevy: A refreshingly simple data-driven game ... -
+      GitHub, accessed on September 1, 2025,
+      https://github.com/bevyengine/bevy
+
+13. meilisearch/meilisearch: A lightning-fast search engine API ... -
+      GitHub, accessed on September 1, 2025,
+      https://github.com/meilisearch/meilisearch
+
+14. yewstack/yew: Rust / Wasm framework for creating reliable ... -
+      GitHub, accessed on September 1, 2025,
+      https://github.com/yewstack/yew
+
+15. pola-rs/polars: Dataframes powered by a multithreaded ... - GitHub,
+      accessed on September 1, 2025, https://github.com/pola-rs/polars
+
+16. nushell/nushell: A new type of shell - GitHub, accessed on September
+      1, 2025, https://github.com/nushell/nushell
+
+17. 19 Best Rust Developers for High-Perf Projects (2025) - EchoGlobal
+      Tech, accessed on September 1, 2025,
+      https://echoglobal.tech/technologies/rust/
+
+18. Andrew Gallant, Engineering a Fast Grep - The University of Rhode
+      Island, accessed on September 1, 2025,
+      https://web.uri.edu/cs/andrew-gallant-engineering-a-fast-grep/
+
+19. Mara Bos (m-ou-se) - GitHub, accessed on September 1, 2025,
+      https://github.com/m-ou-se
+
+20. Zed - 2025 Company Profile, Team, Funding & Competitors - Tracxn,
+      accessed on September 1, 2025,
+      https://tracxn.com/d/companies/zed/__3jn1wtnWJjfLtgOSDXECkHFjHmFm7BkEKtVzcAABH3A
+
+21. Join the Zed Team, accessed on September 1, 2025,
+      https://zed.dev/jobs
+
+22. Astral: High-performance Python tooling, accessed on September 1,
+      2025, https://astral.sh/
+
+23. Astral - Jobs, accessed on September 1, 2025,
+      https://jobs.ashbyhq.com/astral
+
+24. Bevy News, accessed on September 1, 2025, https://bevy.org/news/
+
+25. Bevy Foundation | Every.org, accessed on September 1, 2025,
+      https://www.every.org/bevy-foundation
+
+26. Introduction | Nushell, accessed on September 1, 2025,
+      https://www.nushell.sh/book/
+
+27. The Company - Deno, accessed on September 1, 2025,
+      https://deno.com/company
+
+28. Tauri - 2025 Company Profile & Competitors - Tracxn, accessed on
+      September 1, 2025,
+      https://tracxn.com/d/companies/tauri/__UeWu-yugFL99F0rlJIfZKvkN8itLl65tn82YDk06UMk
+
+29. CrabNebula, accessed on September 1, 2025, https://crabnebula.dev/
+
+30. Tauri 2.0 | Tauri, accessed on September 1, 2025,
+      https://v2.tauri.app/
+
+31. Polars — DataFrames for the new era, accessed on September 1, 2025,
+      https://pola.rs/
+
+32. Polars (Database Software) 2025 Company Profile: Valuation, Funding
+      & Investors, accessed on September 1, 2025,
+      https://pitchbook.com/profiles/company/532987-48
+
+33. Polars — Our Services, accessed on September 1, 2025,
+      https://pola.rs/careers/
+
+34. rust-unofficial/awesome-rust: A curated list of Rust code and
+      resources. - GitHub, accessed on September 1, 2025,
+      https://github.com/rust-unofficial/awesome-rust
+
+35. Recommended open source project to contribute to : r/rust - Reddit,
+      accessed on September 1, 2025,
+      https://www.reddit.com/r/rust/comments/1bxf1vw/recommended_open_source_project_to_contribute_to/
+
+36. Bevy Engine, accessed on September 1, 2025, https://bevy.org/
+
+37. RustDesk: Open-Source Remote Desktop with Self-Hosted Server
+      Solutions, accessed on September 1, 2025, https://rustdesk.com/
+
+38. Yew, accessed on September 1, 2025, https://yew.rs/
+
+39. How Dr. Gavin Wood's Significant Contributions Helped Shape
+      Blockchain Evolution, accessed on September 1, 2025,
+      https://www.cryptopolitan.com/gavin-woods-blockchain-evolution/
+
+40. Gavin Wood - Wikipedia, accessed on September 1, 2025,
+      https://en.wikipedia.org/wiki/Gavin_Wood
+
+41. RustDesk - Wikipedia, accessed on September 1, 2025,
+      https://en.wikipedia.org/wiki/RustDesk
+
+42. Meilisearch 2025 Company Profile: Valuation, Funding & Investors |
+      PitchBook, accessed on September 1, 2025,
+      https://pitchbook.com/profiles/company/399483-37
+
+43. Top 10 Rusty Repositories for you to start your Open Source
+      Journey - DEV Community, accessed on September 1, 2025,
+      https://dev.to/hyperswitchio/top-10-rusty-repositories-for-you-to-start-your-open-source-journey-l9b
+
+44. Repositories - rust-lang - GitHub, accessed on September 1, 2025,
+      https://github.com/orgs/rust-lang/repositories
+
+45. What's the coolest Rust project you've seen that made you go, 'Wow,
+      I didn't know Rust could do that!'? - Reddit, accessed on
+      September 1, 2025,
+      https://www.reddit.com/r/rust/comments/14pfvf8/whats_the_coolest_rust_project_youve_seen_that/
+
+46. Top 15 Rust Projects To Elevate Your Skills | Zero To Mastery,
+      accessed on September 1, 2025,
+      https://zerotomastery.io/blog/rust-practice-projects/
+
+47. Trending Rust developers on GitHub today, accessed on September 1,
+      2025, https://github.com/trending/developers/rust
+
+48. Awesome Rank for rust-unofficial/awesome-rust, accessed on September
+      1, 2025,
+      https://awesomerank.github.io/lists/rust-unofficial/awesome-rust.html
+
+49. Awesome Rust - GitHub, accessed on September 1, 2025,
+      https://github.com/awesome-rust-com/awesome-rust
+
+50. Trending Rust repositories on GitHub today, accessed on September 1,
+      2025, https://github.com/trending/rust
+
+51. Open Source Projects - Rustfinity, accessed on September 1, 2025,
+      https://www.rustfinity.com/open-source
+
+52. $133k-$300k Polars Data Jobs (NOW HIRING) Aug 2025 - ZipRecruiter,
+      accessed on September 1, 2025,
+      https://www.ziprecruiter.com/Jobs/Polars-Data
+
+53. Deno Remote Jobs - Jobera, accessed on September 1, 2025,
+      https://jobera.com/employer/deno/
+
+54. Deno Careers - Jobs in JS, accessed on September 1, 2025,
+      https://jobsinjs.com/company/deno?page=6&slug1=fr
+
+55. Jobs at Deno | Sequoia Capital, accessed on September 1, 2025,
+      https://jobs.sequoiacap.com/jobs/deno
+
+56. $90k-$300k Bevy Jobs (NOW HIRING) Aug 2025 - ZipRecruiter, accessed
+      on September 1, 2025, https://www.ziprecruiter.com/Jobs/Bevy

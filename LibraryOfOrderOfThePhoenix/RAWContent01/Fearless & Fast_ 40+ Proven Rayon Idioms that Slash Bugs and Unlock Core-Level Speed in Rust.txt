@@ -1,0 +1,1150 @@
+# Fearless & Fast: 40+ Proven Rayon Idioms that Slash Bugs and Unlock Core-Level Speed in Rust
+
+## Executive Summary
+Rayon is a data-parallelism library for Rust designed to make converting sequential computations into parallel ones simple, efficient, and safe. [introduction_to_rayon_idioms[0]][1] Its design philosophy centers on 'fearless concurrency', leveraging Rust's ownership and borrowing system to guarantee data-race freedom at compile time. [introduction_to_rayon_idioms[0]][1] An 'idiomatic' pattern in Rayon is one that uses its high-level abstractions to express parallelism with minimal changes to sequential code, leading to high efficiency, low bugs, and good readability. [introduction_to_rayon_idioms[0]][1] This reference document outlines the most critical idiomatic patterns discovered from a comprehensive analysis of the Rayon repository, designed to guide Large Language Models (LLMs) in generating high-quality, efficient, and low-bug parallel Rust code.
+
+### Key Insight 1: The `.par_iter()` Swap is the Gateway to Parallelism
+The cornerstone idiom is transforming a sequential iterator into a parallel one by changing `.iter()` to `.par_iter()`. [introduction_to_rayon_idioms[0]][1] This simple change allows Rayon's work-stealing scheduler to automatically and dynamically distribute computational work across all available CPU cores. [introduction_to_rayon_idioms[0]][1] However, this is only effective for CPU-bound tasks on sufficiently large collections; applying it to tiny workloads or I/O-bound tasks is an anti-pattern where scheduling overhead negates any performance gains. [parallel_iterator_patterns.0.anti_patterns[0]][1]
+
+### Key Insight 2: Lock-Free Aggregation with `fold-reduce` is Paramount
+The most significant performance anti-pattern is using a shared `Arc<Mutex<T>>` accumulator inside a hot loop like `for_each`. [state_management_patterns.0.anti_patterns[0]][2] This serializes execution due to lock contention. [state_management_patterns.0.anti_patterns[0]][2] The idiomatic solution is the `fold().reduce()` pattern, where each thread accumulates results into a local, private state, which are then merged lock-free at the end. [state_management_patterns.0.usage_context[3]][3] This pattern is fundamental for building collections like `HashMap` in parallel and avoids the performance pitfalls and deadlock risks of manual locking. [state_management_patterns.0.usage_context[0]][4] [state_management_patterns.0.usage_context[1]][2] [state_management_patterns.0.usage_context[2]][5]
+
+### Key Insight 3: `rayon::scope` Enables Safe Borrowing for Structured Parallelism
+Unlike `std::thread::spawn`, which requires `'static` lifetimes, `rayon::scope` allows spawned tasks to safely borrow data from the parent stack frame. [structured_parallelism_patterns.0.usage_context[0]][6] Its fork-join model guarantees that the scope will not exit until all spawned tasks are complete, which allows the Rust compiler to prove the safety of these non-static borrows. [structured_parallelism_patterns.0.usage_context[0]][6] This makes it the essential idiom for orchestrating a variable number of tasks that need to operate on shared, stack-allocated data. [structured_parallelism_patterns.0.usage_context[0]][6]
+
+### Key Insight 4: Determinism in Tests is Non-Negotiable
+A common source of flaky tests is the misuse of non-deterministic Rayon APIs. For example, `find_any` prioritizes speed and may return any match, while `find_first` guarantees returning the sequentially first match. [order_and_indexing_patterns.1.usage_context[0]][7] [order_and_indexing_patterns.1.usage_context[1]][8] Idiomatic testing involves creating a per-test custom thread pool with `ThreadPoolBuilder` to ensure isolation and reproducibility, and always using deterministic APIs like `find_first` or `position_first` for assertions. [testing_and_reproducibility_patterns.0.usage_context[0]][9]
+
+## 1. Quick-Start Idiom Atlas—From `.iter()` to `.par_iter()` in 60 s
+The fastest way to introduce parallelism into existing Rust code is by swapping sequential iterators with their Rayon parallel counterparts. [introduction_to_rayon_idioms[0]][1] This is the library's core design principle. [introduction_to_rayon_idioms[0]][1] To enable these methods, you must import the traits from the Rayon prelude: `use rayon::prelude::*;`. [parallel_iterator_patterns.0.code_template[0]][1]
+
+### `par_iter()`: The Immutable Parallel Iterator
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+fn sum_of_squares(input: &[i32]) -> i32 {
+ input.par_iter() // Changed from.iter()
+.map(|&i| i * i)
+.sum()
+}
+```
+[parallel_iterator_patterns.0.code_template[0]][1]
+
+#### When to Use
+This is the most common Rayon pattern, used for parallel immutable iteration and is the direct parallel equivalent of the standard `.iter()`. [parallel_iterator_patterns.0.usage_context[0]][1] Use it for CPU-bound, data-parallel tasks where you need to read from a collection to perform calculations, transformations, or aggregations without modifying the original data. [parallel_iterator_patterns.0.usage_context[0]][1] It is highly efficient for large datasets as Rayon's work-stealing scheduler automatically balances the load. [parallel_iterator_patterns.0.usage_context[0]][1] Its use leads to low bugs because it leverages Rust's borrow checker to prevent data races, guaranteeing that the parallel computation is safe if it compiles. [parallel_iterator_patterns.0.usage_context[0]][1]
+
+#### Anti-Patterns
+A primary anti-pattern is using `par_iter()` on very small collections or for trivial operations where the overhead of task scheduling exceeds the performance gain from parallelism. [parallel_iterator_patterns.0.anti_patterns[0]][1] It is also an anti-pattern for I/O-bound tasks (like network requests), which should use async runtimes. [parallel_iterator_patterns.0.anti_patterns[0]][1] Attempting to mutate shared state (e.g., via a `Mutex`) inside the closure can lead to heavy lock contention, serializing execution and negating the benefits of parallelism. [parallel_iterator_patterns.0.anti_patterns[0]][1]
+
+#### Alternate Patterns
+For small workloads or I/O-bound tasks, the standard sequential `iter()` is the correct choice. [parallel_iterator_patterns.0.alternate_patterns[0]][1] To improve granularity on collections with many small but non-trivial items, one can use `par_chunks()` to process items in batches, ensuring each parallel task has a substantial amount of work. [parallel_iterator_patterns.0.alternate_patterns[0]][1]
+
+### `par_iter_mut()`: The Mutable Parallel Iterator
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+fn increment_all(data: &mut [i32]) {
+ data.par_iter_mut().for_each(|p| *p += 1);
+}
+```
+
+#### When to Use
+This pattern is used for parallel mutable iteration, allowing for in-place modification of elements in a collection. [parallel_iterator_patterns.1.usage_context[0]][1] It is the direct parallel equivalent of `.iter_mut()`. [parallel_iterator_patterns.1.usage_context[0]][1] It is highly efficient for CPU-bound tasks that involve updating each element of a collection independently, such as applying a function to every element of a vector. [parallel_iterator_patterns.1.usage_context[0]][1] The safety is guaranteed by Rust's borrow checker, which ensures that each parallel task gets exclusive access to the element it is modifying, thus preventing data races and leading to low-bug code. [parallel_iterator_patterns.1.usage_context[0]][1]
+
+#### Anti-Patterns
+Similar to `par_iter()`, using this on tiny workloads is inefficient due to overhead. [parallel_iterator_patterns.1.anti_patterns[0]][1] It is also an anti-pattern to perform operations that create dependencies or aliasing between elements being mutated in parallel, though the borrow checker will prevent most of these issues at compile time. [parallel_iterator_patterns.1.anti_patterns[0]][1] Using it for I/O-bound work is also incorrect. [parallel_iterator_patterns.1.anti_patterns[0]][1]
+
+#### Alternate Patterns
+The standard sequential `iter_mut()` is the alternative for small datasets or when strict sequential modification is required. [parallel_iterator_patterns.1.alternate_patterns[0]][1] For batch processing, `par_chunks_mut()` provides a way to get mutable access to larger blocks of the collection in parallel. [parallel_iterator_patterns.1.alternate_patterns[0]][1]
+
+### `into_par_iter()`: The Consuming Parallel Iterator
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+fn collect_owned_strings(data: Vec<String>) -> Vec<String> {
+ data.into_par_iter()
+.map(|s| s.to_uppercase()) // `s` is an owned String
+.collect()
+}
+```
+[parallel_iterator_patterns.2.code_template[0]][1] [parallel_iterator_patterns.2.code_template[1]][10]
+
+#### When to Use
+This pattern is used for parallel consuming iteration, where the collection is moved and the iterator yields owned elements (`T`). It is the parallel equivalent of `.into_iter()`. This is the correct choice when the parallel computation needs to take ownership of the data, for example, to move elements into a new data structure or when the transformation requires an owned value. This leads to high efficiency by avoiding unnecessary cloning or borrowing.
+
+#### Anti-Patterns
+Using `into_par_iter()` when you do not need to consume the collection is an anti-pattern, as it prevents the original collection from being used later. [parallel_iterator_patterns.2.anti_patterns[0]][1] [parallel_iterator_patterns.2.anti_patterns[1]][10] In such cases, `par_iter()` or `par_iter_mut()` should be preferred. [parallel_iterator_patterns.2.anti_patterns[0]][1] It is also subject to the same overhead concerns on small workloads as other parallel iterators. [parallel_iterator_patterns.2.anti_patterns[0]][1]
+
+#### Alternate Patterns
+The standard sequential `into_iter()` is the direct alternative. [parallel_iterator_patterns.2.alternate_patterns[0]][1] If ownership is not required, `par_iter()` (for immutable access) or `par_iter_mut()` (for mutable access) are the correct patterns to use instead. [parallel_iterator_patterns.2.alternate_patterns[0]][1]
+
+## 2. Map-Reduce Power Moves—Lock-Free Aggregation Patterns
+Rayon provides powerful, lock-free patterns for aggregating data in parallel. These `fold` and `reduce` idioms are the key to building complex state without the performance bottlenecks and deadlock risks associated with manual locking.
+
+### `.map(...).sum()`: Simple Numeric Aggregation
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let sum_of_squares: i32 = (0..1000).into_par_iter()
+.map(|i| i * i)
+.sum();
+```
+[map_reduce_aggregation_patterns.0.code_template[0]][3]
+
+#### When to Use
+This is the most concise and idiomatic pattern for simple numeric aggregation in parallel. [map_reduce_aggregation_patterns.0.usage_context[0]][3] It is highly efficient for summing up values where the item type implements the `std::iter::Sum` trait. [map_reduce_aggregation_patterns.0.usage_context[0]][3] The `map` operation is performed in parallel, and Rayon handles the parallel summation efficiently. [map_reduce_aggregation_patterns.0.usage_context[0]][3] It's readable and directly translates from sequential code. [map_reduce_aggregation_patterns.0.usage_context[0]][3]
+
+#### Anti-Patterns
+A major pitfall is using `.sum()` with standard floating-point numbers (`f32`, `f64`). [map_reduce_aggregation_patterns.0.anti_patterns[0]][3] Floating-point addition is not strictly associative due to rounding errors, which means the parallel sum can produce slightly different, non-deterministic results on each run. [map_reduce_aggregation_patterns.0.anti_patterns[0]][3] This can be a source of subtle bugs if exact reproducibility is required. [map_reduce_aggregation_patterns.0.anti_patterns[0]][3]
+
+#### Alternate Patterns
+For more general reductions, `.reduce()` provides more control. [map_reduce_aggregation_patterns.0.alternate_patterns[0]][3] For floating-point sums where precision is critical, a sequential Kahan summation algorithm or a custom `fold` implementation of a parallel compensated sum is a better alternative. [map_reduce_aggregation_patterns.0.alternate_patterns[0]][3] For non-numeric types, `.reduce()` or `.fold()` must be used. [map_reduce_aggregation_patterns.0.alternate_patterns[0]][3]
+
+### `.reduce(identity, op)`: General-Purpose Associative Reduction
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let sums = [(0, 1), (5, 6), (16, 2)]
+.par_iter()
+.cloned()
+.reduce(|| (0, 0), |a, b| (a.0 + b.0, a.1 + b.1));
+```
+[map_reduce_aggregation_patterns.1.code_template[0]][3] [map_reduce_aggregation_patterns.1.code_template[1]][11]
+
+#### When to Use
+This is a general-purpose pattern for combining all items in a parallel iterator into a single value. [map_reduce_aggregation_patterns.1.usage_context[0]][3] [map_reduce_aggregation_patterns.1.usage_context[1]][11] It requires an `identity` closure (providing the starting value, e.g., 0 for addition) and a combining operation `op`. [map_reduce_aggregation_patterns.1.usage_context[0]][3] This is highly efficient for parallelizing any associative reduction, such as finding the maximum value, performing component-wise vector addition, or other custom aggregations. [map_reduce_aggregation_patterns.1.usage_context[0]][3] Correct use leads to low bugs because the requirements (associativity, identity) force clear thinking about the reduction logic. [map_reduce_aggregation_patterns.1.usage_context[0]][3]
+
+#### Anti-Patterns
+The most critical anti-pattern is providing a combining operation that is not associative (e.g., `(a - b) - c != a - (b - c)`). [map_reduce_aggregation_patterns.1.anti_patterns[0]][3] Because Rayon executes operations in a non-deterministic order, a non-associative operation will yield unpredictable and incorrect results. [map_reduce_aggregation_patterns.1.anti_patterns[0]][3] Providing an incorrect identity value will also lead to wrong results. [map_reduce_aggregation_patterns.1.anti_patterns[0]][3] [map_reduce_aggregation_patterns.1.anti_patterns[1]][11]
+
+#### Alternate Patterns
+For simple sums, `.sum()` is more concise. [map_reduce_aggregation_patterns.1.alternate_patterns[0]][3] When the accumulator type needs to be different from the iterator's item type (e.g., summing `u8` values into a `u32` to prevent overflow), the `.fold().reduce()` pattern is the correct choice. [map_reduce_aggregation_patterns.1.alternate_patterns[0]][3] For order-dependent reductions, a sequential `Iterator::reduce` is the only correct option. [map_reduce_aggregation_patterns.1.alternate_patterns[0]][3]
+
+### `.fold().reduce()`: Building Complex State in Parallel
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+use std::collections::HashMap;
+
+let data = vec![1, 2, 2, 3, 3, 3];
+let freqs = data.par_iter()
+.fold(|| HashMap::new(), |mut acc, &x| { *acc.entry(x).or_insert(0) += 1; acc })
+.reduce_with(|mut m1, m2| { 
+ for (k, v) in m2 { *m1.entry(k).or_default() += v; }
+ m1 
+ })
+.unwrap_or_default();
+```
+[map_reduce_aggregation_patterns.2.code_template[0]][3]
+
+#### When to Use
+This is the most powerful and versatile pattern for complex parallel aggregations, such as building a `HashMap` (histogram), `HashSet`, or concatenating strings. [map_reduce_aggregation_patterns.2.usage_context[0]][3] Its key feature is that the accumulator in `fold` can have a different type than the items being iterated over. [map_reduce_aggregation_patterns.2.usage_context[0]][3] Each thread `folds` its items into a local accumulator (e.g., a small `HashMap`). [map_reduce_aggregation_patterns.2.usage_context[0]][3] Then, the `reduce` step merges these intermediate accumulators into the final result. [map_reduce_aggregation_patterns.2.usage_context[0]][3] This pattern is highly efficient because it completely avoids shared-state locking, which is a major performance bottleneck. [map_reduce_aggregation_patterns.2.usage_context[0]][3]
+
+#### Anti-Patterns
+The primary anti-pattern this idiom replaces is using a shared `Arc<Mutex<T>>` accumulator inside a `for_each` loop. Attempting to lock a mutex for every single item serializes the computation and introduces massive contention, often making the parallel code slower than the sequential version. This is a classic pitfall for developers new to parallel programming.
+
+#### Alternate Patterns
+For collections that implement `FromParallelIterator`, simply using `.collect()` is a higher-level and more concise alternative (e.g., `par_iter.collect::<HashMap<_,_>>()`). [map_reduce_aggregation_patterns.2.alternate_patterns[0]][3] For simpler reductions where the accumulator type is the same as the item type, `.reduce()` is sufficient. [map_reduce_aggregation_patterns.2.alternate_patterns[0]][3] A sequential `Iterator::fold` is the non-parallel alternative. [map_reduce_aggregation_patterns.2.alternate_patterns[0]][3]
+
+## 3. Error Handling the Rayon Way—Stop Fast, Report Smart
+Rayon provides a suite of `try_*` methods that enable robust and efficient error handling in parallel computations. These idioms allow for early exit on failure, preventing wasted work and providing clear error signals.
+
+### `try_for_each` for Early Exit on Side-Effects
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+use std::io::{self, Write};
+
+// This will stop iteration early if there's any write error.
+(0..100).into_par_iter()
+.try_for_each(|x| writeln!(io::stdout(), "{:?}", x))
+.expect("expected no write errors");
+```
+[fallible_and_error_handling_patterns.0.code_template[0]][3] [fallible_and_error_handling_patterns.0.code_template[1]][12]
+
+#### When to Use
+Executes a fallible operation for its side effects on each item in parallel. [fallible_and_error_handling_patterns.0.usage_context[0]][3] [fallible_and_error_handling_patterns.0.usage_context[1]][12] It's highly efficient for validation or processing tasks (like writing to a stream) where the entire operation should be aborted on the first failure. [fallible_and_error_handling_patterns.0.usage_context[0]][3] This prevents wasting computational resources and provides a clear, early error signal, leading to low bugs and high efficiency in error scenarios. [fallible_and_error_handling_patterns.0.usage_context[0]][3]
+
+#### Anti-Patterns
+Using `panic!` for recoverable errors instead of returning a `Result`. [fallible_and_error_handling_patterns.0.anti_patterns[0]][3] [fallible_and_error_handling_patterns.0.anti_patterns[1]][12] Manually implementing error propagation with channels or shared atomics is also an anti-pattern, as `try_for_each` provides a built-in, optimized mechanism for this. [fallible_and_error_handling_patterns.0.anti_patterns[0]][3] This method should not be used when you need to know about all failures, not just the first one. [fallible_and_error_handling_patterns.0.anti_patterns[0]][3]
+
+#### Alternate Patterns
+For non-critical errors where you want to process all items, you can `map` operations into `Result`s and then `collect()` them into a `Vec<Result<T, E>>`. [fallible_and_error_handling_patterns.0.alternate_patterns[0]][12] [fallible_and_error_handling_patterns.0.alternate_patterns[1]][3] This allows for post-processing of all successes and failures but sacrifices early cancellation. [fallible_and_error_handling_patterns.0.alternate_patterns[0]][12] For small datasets, a sequential `for` loop with `?` is simpler. [fallible_and_error_handling_patterns.0.alternate_patterns[0]][12]
+
+### `try_fold` with `try_reduce` for Fallible Aggregation
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let bytes = 0..22_u8;
+let sum = bytes.into_par_iter()
+.try_fold(|| 0_u32, |acc, byte| acc.checked_add(byte as u32))
+.try_reduce(|| 0, u32::checked_add);
+
+assert_eq!(sum, Some((0..22).sum()));
+```
+[fallible_and_error_handling_patterns.1.code_template[0]][12] [fallible_and_error_handling_patterns.1.code_template[1]][3]
+
+#### When to Use
+Performs a fallible parallel reduction. [fallible_and_error_handling_patterns.1.usage_context[0]][12] `try_fold` handles accumulation within a thread's local chunk, short-circuiting only that chunk on error. [fallible_and_error_handling_patterns.1.usage_context[0]][12] It's then combined with `try_reduce` to merge the intermediate results, which provides global short-circuiting. [fallible_and_error_handling_patterns.1.usage_context[0]][12] [fallible_and_error_handling_patterns.1.usage_context[1]][3] This is the idiomatic pattern for parallel aggregations that can fail, such as summing numbers with overflow checks. [fallible_and_error_handling_patterns.1.usage_context[0]][12] It ensures correctness and efficiency by stopping work as soon as an invalid state is detected. [fallible_and_error_handling_patterns.1.usage_context[0]][12]
+
+#### Anti-Patterns
+Ignoring the potential for overflow in parallel sums. [fallible_and_error_handling_patterns.1.anti_patterns[0]][3] Using a standard `fold` and `reduce` and then checking for a sentinel error value is less explicit and more error-prone than using the `try_*` variants with `Result` or `Option`. [fallible_and_error_handling_patterns.1.anti_patterns[0]][3] [fallible_and_error_handling_patterns.1.anti_patterns[1]][12] Leaking a partially computed, incorrect result is a major pitfall that `try_reduce` prevents. [fallible_and_error_handling_patterns.1.anti_patterns[0]][3]
+
+#### Alternate Patterns
+Collecting all intermediate results into a `Vec<Option<T>>` and then manually reducing them sequentially; this loses the benefit of parallel reduction and early exit. [fallible_and_error_handling_patterns.1.alternate_patterns[0]][12] [fallible_and_error_handling_patterns.1.alternate_patterns[1]][3] A sequential `try_fold` from the standard library is the alternative for small datasets or when parallelism is not required. [fallible_and_error_handling_patterns.1.alternate_patterns[0]][12]
+
+### Collecting Results for Comprehensive Error Reporting
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+fn fallible_operation(i: &i32) -> Result<i32, &str> {
+ if *i % 2 == 0 { Ok(*i * 2) } else { Err("is odd") }
+}
+
+let data = vec![1, 2, 3, 4];
+let results: Vec<Result<i32, &str>> = data.par_iter().map(|item| fallible_operation(item)).collect();
+```
+[fallible_and_error_handling_patterns.2.code_template[0]][12] [fallible_and_error_handling_patterns.2.code_template[1]][3]
+
+#### When to Use
+When you need to process all items in a collection and get a report of every success and failure, rather than stopping on the first error. [fallible_and_error_handling_patterns.2.usage_context[0]][12] [fallible_and_error_handling_patterns.2.usage_context[1]][3] This is useful for batch validation or parsing tasks where you want to present the user with a complete list of all errors. [fallible_and_error_handling_patterns.2.usage_context[0]][12] While it doesn't short-circuit as aggressively as `try_for_each`, it is highly efficient for parallelizing the work itself. [fallible_and_error_handling_patterns.2.usage_context[0]][12]
+
+#### Anti-Patterns
+Using this pattern when early exit is desired, as it's wasteful to continue processing after a critical failure. [fallible_and_error_handling_patterns.2.anti_patterns[0]][12] [fallible_and_error_handling_patterns.2.anti_patterns[1]][3] The `FromParallelIterator` implementation for `Result<T, E>` does short-circuit on the first `Err`, but it doesn't offer the same strong guarantee of immediate work cancellation across all threads as the dedicated `try_*` methods. [fallible_and_error_handling_patterns.2.anti_patterns[0]][12]
+
+#### Alternate Patterns
+The primary alternate is using `try_for_each` or `try_reduce` for early cancellation. [fallible_and_error_handling_patterns.2.alternate_patterns[0]][3] [fallible_and_error_handling_patterns.2.alternate_patterns[1]][12] Another is to use a `fold` to accumulate successes and failures into separate collections within each thread, then `reduce` to merge them. [fallible_and_error_handling_patterns.2.alternate_patterns[0]][3]
+
+## 4. Divide & Conquer Templates (`rayon::join`)
+The `rayon::join` function is the fundamental building block for divide-and-conquer parallelism in Rayon, allowing a task to be split into two smaller, independent sub-tasks that can run concurrently. [introduction_to_rayon_idioms[2]][13]
+
+### `rayon::join` for Recursive Algorithms
+
+#### Code Template
+```rust
+fn quick_sort<T: PartialOrd + Send>(v: &mut [T]) {
+ const SEQUENTIAL_THRESHOLD: usize = 20; // Threshold for sequential fallback
+ if v.len() > SEQUENTIAL_THRESHOLD {
+ let mid = partition(v);
+ let (lo, hi) = v.split_at_mut(mid);
+ // Recursively sort the two halves in parallel.
+ rayon::join(|| quick_sort(lo),
+ || quick_sort(hi));
+ } else if v.len() > 1 {
+ // Use sequential sort for small slices
+ v.sort_unstable();
+ }
+}
+
+// Dummy partition function for template completeness
+fn partition<T: PartialOrd + Send>(v: &mut [T]) -> usize {
+ let pivot = v.len() - 1;
+ let mut i = 0;
+ for j in 0..pivot {
+ if v[j] <= v[pivot] {
+ v.swap(i, j);
+ i += 1;
+ }
+ }
+ v.swap(i, pivot);
+ i
+}
+```
+[divide_and_conquer_patterns.0.code_template[0]][14] [divide_and_conquer_patterns.0.code_template[1]][13]
+
+#### When to Use
+The `rayon::join` function is the idiomatic pattern for implementing divide-and-conquer algorithms where a problem can be recursively split into two independent, smaller subproblems. [divide_and_conquer_patterns.0.usage_context[0]][13] [divide_and_conquer_patterns.0.usage_context[1]][14] It is highly efficient for CPU-bound recursive tasks, such as parallel quicksort or mergesort. [divide_and_conquer_patterns.0.usage_context[1]][14] The key to its efficiency is 'potential parallelism': it submits the second task to the work-stealing queue and immediately starts executing the first. [divide_and_conquer_patterns.0.usage_context[0]][13] If an idle thread is available, it will steal and execute the second task in parallel. [divide_and_conquer_patterns.0.usage_context[0]][13] This low-overhead, dynamic scheduling leads to high efficiency and excellent load balancing, especially when the subproblems are well-balanced in terms of computational cost. [divide_and_conquer_patterns.0.usage_context[0]][13] Unlike `std::thread::spawn`, closures passed to `join` can borrow data from the local stack, which, combined with Rust's compile-time checks, leads to low-bug, data-race-free concurrent code. [divide_and_conquer_patterns.0.usage_context[0]][13]
+
+#### Anti-Patterns
+A primary anti-pattern is deep recursion without a sequential base case. Recursively calling `join` on trivial subproblems (e.g., single-element slices) creates an exponential number of tiny, high-overhead tasks that can make the parallel version significantly slower than the sequential one. Another anti-pattern is using `join` for highly unbalanced splits, where one task is much larger than the other; this diminishes the benefits of parallelism as one thread may sit idle. It is also an anti-pattern to perform blocking I/O (file or network operations) inside `join` closures, as this can block a worker thread and starve the entire thread pool, leading to poor performance or deadlocks. Finally, relying on the order of side-effects (like logging) is incorrect, as the execution order of the two closures is non-deterministic.
+
+#### Alternate Patterns
+For spawning a variable number of tasks (more than two), `rayon::scope` is the more flexible and idiomatic alternative. [divide_and_conquer_patterns.0.alternate_patterns[0]][13] [divide_and_conquer_patterns.0.alternate_patterns[1]][14] For processing collections, `par_iter()` is a higher-level and often more convenient abstraction that is built on top of `join` and automatically handles splitting and sequential fallbacks. [divide_and_conquer_patterns.0.alternate_patterns[0]][13] For very small subproblems, falling back to a sequential algorithm (e.g., `slice::sort_unstable`) is a critical alternate pattern for performance. [divide_and_conquer_patterns.0.alternate_patterns[1]][14] For joining more than two tasks, the external `rayon-join` crate provides a `join_many!` macro that builds a balanced tree of binary `join` calls.
+
+## 5. Structured Parallelism with `scope`—Borrow Safely, Return Cleanly
+`rayon::scope` provides a structured, fork-join concurrency model that guarantees all spawned tasks complete before the scope exits. [structured_parallelism_patterns.0.pattern_name[0]][6] This enables safe borrowing of non-`'static` data from the stack, a significant advantage over `std::thread::spawn`. [structured_parallelism_patterns.0.usage_context[0]][6]
+
+### `rayon::scope` for Lifetime-Safe Task Spawning
+
+#### Code Template
+```rust
+let mut results = vec![0; 4];
+let input_data = vec![10, 20, 30, 40];
+
+// `scope` creates a context 's' for spawning tasks.
+// The function will not return until all spawned tasks are complete.
+rayon::scope(|s| {
+ // Spawn tasks that can safely borrow from the parent stack frame.
+ for (i, res) in results.iter_mut().enumerate() {
+ let input_slice = &input_data[i..=i]; // Borrow from 'input_data'
+ s.spawn(move |_| {
+ // This task can safely access 'res' (a mutable borrow)
+ // and 'input_slice' (an immutable borrow).
+ *res = input_slice[0] * 2; // Simulate work
+ });
+ }
+});
+
+// By this point, all tasks are guaranteed to have finished.
+// `results` will be `[20, 40, 60, 80]`
+```
+[structured_parallelism_patterns.0.code_template[0]][6]
+
+#### When to Use
+The `rayon::scope` function is the idiomatic pattern for structured parallelism when you need to spawn a variable number of related tasks that must borrow data from the local stack frame. [structured_parallelism_patterns.0.usage_context[0]][6] Its core 'fork-join' model guarantees that the `scope` function will not return until all tasks spawned within it have completed. [structured_parallelism_patterns.0.usage_context[0]][6] This guarantee is what allows the Rust compiler to prove that borrows of local variables are safe, preventing dangling references and leading to extremely low-bug concurrent code. [structured_parallelism_patterns.0.usage_context[0]][6] [structured_parallelism_patterns.0[1]][15] This pattern is essential for orchestrating multiple, lifetime-safe tasks, directly solving the limitation of `std::thread::spawn` which requires all captured data to have a `'static` lifetime. [structured_parallelism_patterns.0.usage_context[0]][6]
+
+#### Anti-Patterns
+The primary anti-pattern `rayon::scope` solves is using `std::thread::spawn` with closures that attempt to borrow non-`'static` data from the local stack, which results in a compilation error. [structured_parallelism_patterns.0.anti_patterns[0]][6] Within Rayon, using `scope` when a simpler primitive would suffice is also an anti-pattern; for example, using `scope` to spawn exactly two tasks is less efficient than using `rayon::join`, as `scope` allocates tasks on the heap while `join` can use the stack. [structured_parallelism_patterns.0.anti_patterns[0]][6] Another pitfall is that deeply nested `scope` or `join` calls can lead to stack overflow under certain work-stealing conditions, as a blocked thread may execute other work on its current stack. [introduction_to_rayon_idioms[20]][16] Finally, using `rayon::spawn` when stack data is needed is incorrect; `scope` is the intended solution. [introduction_to_rayon_idioms[31]][17]
+
+#### Alternate Patterns
+For spawning exactly two tasks, `rayon::join` is a more efficient and preferred alternative. [structured_parallelism_patterns.0.alternate_patterns[0]][6] For data-parallel processing of collections, `par_iter()` is the simplest and most idiomatic choice. [structured_parallelism_patterns.0.alternate_patterns[0]][6] `crossbeam::scope` provides a similar API for scoped threading but typically spawns new OS threads rather than using a work-stealing pool. [introduction_to_rayon_idioms[40]][18] [introduction_to_rayon_idioms[42]][19] Rayon also offers variants like `rayon::scope_fifo` which guarantees a First-In-First-Out stealing order (vs. the default LIFO for the local thread) and `rayon::in_place_scope` which guarantees the initial closure runs on the calling thread. [structured_parallelism_patterns.0.alternate_patterns[0]][6] [introduction_to_rayon_idioms[33]][20]
+
+## 6. Slice Superpowers—Chunks, Windows, Splits for Cache-Friendly Loops
+Rayon provides a rich set of adaptors on slices (`&[T]` and `&mut [T]`) that enable common and efficient parallel processing patterns beyond simple per-element iteration. These methods are crucial for algorithms in scientific computing, image processing, and data parsing.
+
+### `par_chunks_mut` for In-Place Parallel Block Processing
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let mut slice = [1, 2, 3, 4, 5];
+slice.par_chunks_mut(2).for_each(|chunk| chunk.reverse());
+assert_eq!(slice, [2, 1, 4, 3, 5]);
+```
+[parallel_slice_processing_patterns.0.code_template[0]][21]
+
+#### When to Use
+This is the idiomatic way to process a mutable slice in parallel by dividing it into non-overlapping, mutable chunks. [parallel_slice_processing_patterns.0.usage_context[0]][21] It's highly efficient for tasks like image processing (operating on rows of pixels), matrix operations, or applying a transformation to blocks of data in-place. [parallel_slice_processing_patterns.0.usage_context[0]][21] It guarantees no data races between chunks, leading to low bugs. [parallel_slice_processing_patterns.0.usage_context[0]][21]
+
+#### Anti-Patterns
+Using a tiny `chunk_size`. The overhead of creating and scheduling parallel tasks for each chunk can dominate the execution time, making it slower than a sequential loop. [parallel_slice_processing_patterns.0.anti_patterns[0]][21] Also, accessing other shared mutable state from within the closure can introduce lock contention, negating the benefits of parallelism. [parallel_slice_processing_patterns.0.anti_patterns[0]][21]
+
+#### Alternate Patterns
+Using `par_iter_mut()` provides finer-grained parallelism at the element level. For more control over splitting, one can use `with_min_len()` on an `IndexedParallelIterator` to manually tune granularity.
+
+### `par_windows` for Overlapping Neighborhood Operations
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let slice = [1, 2, 3, 4];
+let windows: Vec<_> = slice.par_windows(2).collect();
+assert_eq!(windows, vec![&[1, 2][..], &[2, 3], &[3, 4]]);
+```
+[parallel_slice_processing_patterns.1.code_template[0]][21]
+
+#### When to Use
+Creates a parallel iterator over all contiguous, overlapping windows of a specified size. [parallel_slice_processing_patterns.1.usage_context[0]][21] This is ideal for algorithms that need to consider an element's neighbors, such as calculating moving averages, stencil computations in scientific computing, or feature detection in signal processing. [parallel_slice_processing_patterns.1.usage_context[0]][21] It provides a high-level, safe abstraction for these common tasks. [parallel_slice_processing_patterns.1.usage_context[0]][21]
+
+#### Anti-Patterns
+Using a `window_size` of 0, which will cause a panic. Using it on very small slices where the overhead of parallelization is not justified.
+
+#### Alternate Patterns
+Manually creating windows with a `par_iter().enumerate().map()` combination is more complex and error-prone. [parallel_slice_processing_patterns.1.alternate_patterns[0]][21] For sequential processing, `slice.windows()` is the direct equivalent. [parallel_slice_processing_patterns.1.alternate_patterns[0]][21]
+
+### `par_split` for Parallel Sub-slice Processing by Separator
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let slice = [1, 2, 3, 0, 4, 5, 0, 6];
+let products: Vec<i32> = slice.par_split(|x| *x == 0)
+.map(|sub_slice| sub_slice.iter().product())
+.collect();
+assert_eq!(products, vec![6, 20, 6]);
+```
+[parallel_slice_processing_patterns.2.code_template[0]][21]
+
+#### When to Use
+Splits a slice into subslices based on a separator predicate and processes each subslice in parallel. [parallel_slice_processing_patterns.2.usage_context[0]][21] This is highly efficient for processing data that is naturally partitioned by delimiters, such as parsing records from a large byte buffer separated by null characters or newlines. [parallel_slice_processing_patterns.2.usage_context[0]][21]
+
+#### Anti-Patterns
+Using a predicate that creates a vast number of very small subslices, which can lead to high scheduling overhead and poor performance. [parallel_slice_processing_patterns.2.anti_patterns[0]][21]
+
+#### Alternate Patterns
+A sequential loop that manually finds separators and processes the subslices. For mutable splitting, `par_split_mut` is the corresponding pattern.
+
+## 7. Sorting at Scale—When to Choose `par_sort_unstable`, `par_sort`, `par_sort_by_cached_key`
+Rayon provides a suite of parallel sorting algorithms that offer significant performance improvements over their sequential counterparts for large datasets. Choosing the right one depends on the trade-offs between performance, memory usage, and the requirement for stable ordering.
+
+### `par_sort_unstable` for Maximum Performance Sorting
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let mut v = vec![5, 2, 8, 1, 9];
+v.par_sort_unstable();
+assert_eq!(v, vec![1, 2, 5, 8, 9]);
+```
+[parallel_sorting_patterns.0.code_template[0]][22]
+
+#### When to Use
+For sorting large slices where the relative order of equal elements does not need to be preserved. [parallel_sorting_patterns.0.usage_context[0]][22] It's performed in-place (no extra allocation) and is generally the fastest parallel sorting method. [parallel_sorting_patterns.0.usage_context[0]][22] It's the idiomatic choice for performance-critical sorting of primitive types or when stability is not a requirement. [parallel_sorting_patterns.0.usage_context[0]][22]
+
+#### Anti-Patterns
+Using it on small arrays where the overhead of parallelization makes it slower than `slice::sort_unstable`. [parallel_sorting_patterns.0.anti_patterns[0]][22] Using it when the stability of the sort is a requirement for algorithm correctness, as it can break logic that depends on the original order of equal items. [parallel_sorting_patterns.0.anti_patterns[0]][22]
+
+#### Alternate Patterns
+`par_sort` for stable parallel sorting. [parallel_sorting_patterns.0.alternate_patterns[0]][22] The standard library's `slice::sort_unstable` for sequential sorting or for small slices where parallel overhead is undesirable. [parallel_sorting_patterns.0.alternate_patterns[0]][22]
+
+### `par_sort` for Stable Parallel Sorting
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let mut v = vec![(2, "b"), (1, "a"), (2, "a")];
+v.par_sort_by_key(|k| k.0);
+// The relative order of (2, "b") and (2, "a") is preserved.
+assert_eq!(v, vec![(1, "a"), (2, "b"), (2, "a")]);
+```
+[parallel_sorting_patterns.1.code_template[0]][22]
+
+#### When to Use
+For sorting large slices where the relative order of equal elements must be preserved. [parallel_sorting_patterns.1.usage_context[0]][22] This is crucial for multi-pass sorting (e.g., sorting by a secondary key after a primary one) or when the original order has meaning. [parallel_sorting_patterns.1.usage_context[0]][22] It's an adaptive parallel merge sort, which can be very fast on nearly-sorted data. [parallel_sorting_patterns.1.usage_context[0]][22]
+
+#### Anti-Patterns
+Using it when stability is not needed, as it's generally slower and requires extra memory allocation (equal to the slice size) compared to `par_sort_unstable`. [parallel_sorting_patterns.1.anti_patterns[0]][22] Using it on small arrays where both the allocation and parallelization overhead are detrimental. [parallel_sorting_patterns.1.anti_patterns[0]][22]
+
+#### Alternate Patterns
+`par_sort_unstable` for faster, unstable sorting. [parallel_sorting_patterns.1.alternate_patterns[0]][22] The standard library's `slice::sort` for sequential stable sorting. [parallel_sorting_patterns.1.alternate_patterns[0]][22]
+
+### `par_sort_by_cached_key` for Expensive Key Extractions
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let mut v = vec!["apple", "banana", "cherry"];
+// Assume to_uppercase() is an expensive operation.
+v.par_sort_by_cached_key(|s| s.to_uppercase());
+```
+[parallel_sorting_patterns.2.code_template[0]][22]
+
+#### When to Use
+This is the critical idiom when the function to extract the sorting key is computationally expensive (e.g., involves string formatting, complex calculations, or filesystem access). [parallel_sorting_patterns.2.usage_context[0]][22] It computes the key only once per element, caches it, and then sorts based on the cached keys. [parallel_sorting_patterns.2.usage_context[0]][22] The key extraction itself is performed in parallel, leading to high efficiency. [parallel_sorting_patterns.2.usage_context[0]][22]
+
+#### Anti-Patterns
+Using `par_sort_by_key` or `par_sort_unstable_by_key` with an expensive key function. [parallel_sorting_patterns.2.anti_patterns[0]][22] These methods may call the key function multiple times per element during comparisons, leading to redundant work and poor performance. [parallel_sorting_patterns.2.anti_patterns[0]][22] This is a classic performance pitfall that `par_sort_by_cached_key` solves. [parallel_sorting_patterns.2.anti_patterns[0]][22]
+
+#### Alternate Patterns
+Manually creating a `Vec` of `(key, original_value)` tuples, sorting it by key, and then extracting the original values. [parallel_sorting_patterns.2.alternate_patterns[0]][22] `par_sort_by_cached_key` automates this pattern efficiently and in parallel. [parallel_sorting_patterns.2.alternate_patterns[0]][22]
+
+## 8. Building & Extending Collections
+Rayon provides high-level, idiomatic patterns for efficiently creating or growing collections from parallel iterators. These methods are designed to be highly efficient by avoiding the contention and overhead of manual locking.
+
+### `collect()` (via `FromParallelIterator`)
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+use std::collections::HashMap;
+
+let squares: Vec<i32> = (0..100).into_par_iter().map(|i| i * i).collect();
+
+let map: HashMap<i32, i32> = (0..100).into_par_iter().map(|i| (i, i*i)).collect();
+```
+[parallel_collection_building_patterns.0.code_template[0]][23] [parallel_collection_building_patterns.0.code_template[1]][24] [parallel_collection_building_patterns.0.code_template[2]][25]
+
+#### When to Use
+This is the primary and most idiomatic pattern for creating a new collection from the results of a parallel iterator. [parallel_collection_building_patterns.0.usage_context[0]][25] [parallel_collection_building_patterns.0.usage_context[1]][24] It is implemented for most standard collections like `Vec`, `HashMap`, `HashSet`, and `String`. [parallel_collection_building_patterns.0.usage_context[0]][25] It offers high-throughput construction by having each thread collect its results into a local buffer; these buffers are then efficiently merged into the final collection without user-visible locking. [parallel_collection_building_patterns.0.usage_context[0]][25] For indexed iterators (like those from slices or ranges), `collect::<Vec<T>>()` is guaranteed to preserve the original order of elements, which is crucial for correctness and leads to low-bug code. [parallel_collection_building_patterns.0.usage_context[0]][25]
+
+#### Anti-Patterns
+The most significant anti-pattern is manually creating a shared collection (e.g., `Arc<Mutex<Vec<T>>>`) and pushing results into it from within a `for_each` closure. [parallel_collection_building_patterns.0.anti_patterns[0]][25] [parallel_collection_building_patterns.0.anti_patterns[1]][24] [parallel_collection_building_patterns.0.anti_patterns[2]][26] [parallel_collection_building_patterns.0.anti_patterns[3]][23] This introduces a global lock that serializes access, negates the benefits of parallelism, and leads to poor performance due to contention. [parallel_collection_building_patterns.0.anti_patterns[0]][25] Using `.collect()` avoids this entirely. [parallel_collection_building_patterns.0.anti_patterns[0]][25]
+
+#### Alternate Patterns
+For collections or custom data structures that do not implement `FromParallelIterator`, the `fold-reduce` pattern is the correct alternative. [parallel_collection_building_patterns.0.alternate_patterns[0]][26] [parallel_collection_building_patterns.0.alternate_patterns[1]][24] [parallel_collection_building_patterns.0.alternate_patterns[2]][25] [parallel_collection_building_patterns.0.alternate_patterns[3]][23] This involves manually implementing the logic of creating thread-local collections (`fold`) and then merging them (`reduce`). [parallel_collection_building_patterns.0.alternate_patterns[0]][26]
+
+### `par_extend()` (via `ParallelExtend`)
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let mut vec = vec![0, 1, 2];
+// Extend the existing vector with items from a parallel iterator
+vec.par_extend(3..100);
+```
+[parallel_collection_building_patterns.1.code_template[0]][24] [parallel_collection_building_patterns.1.code_template[1]][25]
+
+#### When to Use
+This pattern is used to efficiently add items from a parallel iterator to an *existing* collection. [parallel_collection_building_patterns.1.usage_context[0]][24] [parallel_collection_building_patterns.1.usage_context[1]][25] It is the parallel equivalent of the standard `extend()` method. [parallel_collection_building_patterns.1.usage_context[0]][24] Like `collect()`, it is a high-throughput operation that avoids manual locking by using thread-local intermediate storage which is then merged into the target collection. [parallel_collection_building_patterns.1.usage_context[0]][24] This is the idiomatic way to grow a collection in parallel. [parallel_collection_building_patterns.1.usage_context[0]][24]
+
+#### Anti-Patterns
+The anti-pattern is the same as for `collect()`: manually locking and extending a shared collection from multiple threads, which leads to poor performance. [parallel_collection_building_patterns.1.anti_patterns[0]][24] [parallel_collection_building_patterns.1.anti_patterns[1]][25] `par_extend` is the high-level, efficient solution to this problem. [parallel_collection_building_patterns.1.anti_patterns[0]][24]
+
+#### Alternate Patterns
+An alternative would be to `.collect()` the new items into a temporary collection and then use the sequential `.extend()` to add them to the main collection. [parallel_collection_building_patterns.1.alternate_patterns[0]][24] [parallel_collection_building_patterns.1.alternate_patterns[1]][25] However, `par_extend()` is generally more direct and can be more efficient as it's a single, optimized operation. [parallel_collection_building_patterns.1.alternate_patterns[0]][24]
+
+## 9. Order, Indexing & Searches—Determinism vs. Throughput
+Rayon provides powerful tools for working with indexed data and performing searches in parallel. A key consideration is the trade-off between deterministic, ordered results and maximum parallel throughput.
+
+### `enumerate` for Order-Preserving Indexed Processing
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let data = vec!["a", "b", "c"];
+let indexed_data: Vec<(usize, &str)> = data.par_iter().enumerate().map(|(i, v)| (i, *v)).collect();
+assert_eq!(indexed_data, vec![(0, "a"), (1, "b"), (2, "c")]);
+```
+[order_and_indexing_patterns.0.code_template[0]][27] [order_and_indexing_patterns.0.code_template[1]][8] [order_and_indexing_patterns.0.code_template[2]][7]
+
+#### When to Use
+This is the primary idiom for accessing an element's original position during parallel processing. [order_and_indexing_patterns.0.usage_context[0]][27] It pairs each item from an `IndexedParallelIterator` (like from a slice or Vec) with its original index. [order_and_indexing_patterns.0.usage_context[0]][27] [order_and_indexing_patterns.0.usage_context[1]][8] [order_and_indexing_patterns.0.usage_context[2]][7] This is essential for algorithms that depend on an element's position. [order_and_indexing_patterns.0.usage_context[0]][27] When combined with `collect()`, it ensures the final output is correctly ordered, leading to low bugs by making order explicit and reliable. [order_and_indexing_patterns.0.usage_context[0]][27]
+
+#### Anti-Patterns
+Assuming that a `for_each` loop on an enumerated iterator will execute its side effects in order. [order_and_indexing_patterns.0.anti_patterns[0]][27] [order_and_indexing_patterns.0.anti_patterns[1]][8] [order_and_indexing_patterns.0.anti_patterns[2]][7] While `enumerate` provides the correct index for each item, the work-stealing scheduler means the `for_each` closure will run in a non-deterministic sequence. [order_and_indexing_patterns.0.anti_patterns[0]][27] Order is preserved for collection, not for side-effect execution. [order_and_indexing_patterns.0.anti_patterns[0]][27]
+
+#### Alternate Patterns
+Manually creating an iterator of indices `(0..len).into_par_iter()` and zipping it with the data iterator. [order_and_indexing_patterns.0.alternate_patterns[0]][27] [order_and_indexing_patterns.0.alternate_patterns[1]][8] [order_and_indexing_patterns.0.alternate_patterns[2]][7] `enumerate` is a more direct and readable abstraction for this common task. [order_and_indexing_patterns.0.alternate_patterns[0]][27]
+
+### `find_first` (Deterministic) vs. `find_any` (Non-Deterministic)
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let a = [1, 2, 3, 3];
+// Deterministic: Guaranteed to find the first '3' at index 2.
+assert_eq!(a.par_iter().position_first(|&x| x == 3), Some(2));
+
+// Non-Deterministic: May find the '3' at index 2 or 3.
+let any_pos = a.par_iter().position_any(|&x| x == 3).unwrap();
+assert!(any_pos == 2 || any_pos == 3);
+```
+[order_and_indexing_patterns.1.code_template[0]][7] [order_and_indexing_patterns.1.code_template[1]][8]
+
+#### When to Use
+This pattern highlights the trade-off between correctness and performance in parallel searches. [order_and_indexing_patterns.1.usage_context[0]][7] [order_and_indexing_patterns.1.usage_context[1]][8] Use `find_first` (or `position_first`) when you need the *guaranteed first* element in sequential order. [order_and_indexing_patterns.1.usage_context[0]][7] This is crucial for correctness in order-sensitive algorithms. [order_and_indexing_patterns.1.usage_context[0]][7] Use `find_any` (or `position_any`) when *any* matching element is acceptable and you want the fastest possible result, as it allows for early exit as soon as any thread finds a match. [order_and_indexing_patterns.1.usage_context[0]][7]
+
+#### Anti-Patterns
+The most common and critical anti-pattern is using `find_any` while assuming it will return the first element. [order_and_indexing_patterns.1.anti_patterns[0]][7] [order_and_indexing_patterns.1.anti_patterns[1]][8] This leads to non-deterministic, flaky tests and subtle bugs that are hard to reproduce. [order_and_indexing_patterns.1.anti_patterns[0]][7] Always use `find_first` if determinism is required. [order_and_indexing_patterns.1.anti_patterns[0]][7]
+
+#### Alternate Patterns
+For `find_first`, using the `by_exponential_blocks()` adaptor can improve performance by biasing the search towards the beginning of the iterator. [order_and_indexing_patterns.1.alternate_patterns[0]][8] For finding all matches, use `filter().collect()` or the `positions()` method on `IndexedParallelIterator`. [order_and_indexing_patterns.1.alternate_patterns[0]][8] [order_and_indexing_patterns.1.alternate_patterns[1]][7]
+
+### `zip`/`zip_eq` for Parallel Element-wise Operations
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let a = vec![1, 2, 3];
+let b = vec![4, 5, 6];
+let zipped: Vec<(i32, i32)> = a.par_iter().zip_eq(b.par_iter()).map(|(&x, &y)| (x, y)).collect();
+assert_eq!(zipped, vec![(1, 4), (2, 5), (3, 6)]);
+```
+[order_and_indexing_patterns.2.code_template[0]][28] [order_and_indexing_patterns.2.code_template[1]][1] [order_and_indexing_patterns.2.code_template[2]][29] [order_and_indexing_patterns.2.code_template[3]][30] [order_and_indexing_patterns.2.code_template[4]][31] [order_and_indexing_patterns.2.code_template[5]][13] [order_and_indexing_patterns.2.code_template[6]][32] [order_and_indexing_patterns.2.code_template[7]][33] [order_and_indexing_patterns.2.code_template[8]][14] [order_and_indexing_patterns.2.code_template[9]][34] [order_and_indexing_patterns.2.code_template[10]][35] [order_and_indexing_patterns.2.code_template[11]][36] [order_and_indexing_patterns.2.code_template[12]][37] [order_and_indexing_patterns.2.code_template[13]][38] [order_and_indexing_patterns.2.code_template[14]][26] [order_and_indexing_patterns.2.code_template[15]][39] [order_and_indexing_patterns.2.code_template[16]][4] [order_and_indexing_patterns.2.code_template[17]][40] [order_and_indexing_patterns.2.code_template[18]][41] [order_and_indexing_patterns.2.code_template[19]][42]
+
+#### When to Use
+For combining two or more parallel iterators to perform element-wise operations in parallel (e.g., vector addition, dot products). [order_and_indexing_patterns.2.usage_context[0]][28] [order_and_indexing_patterns.2.usage_context[1]][1] [order_and_indexing_patterns.2.usage_context[2]][29] [order_and_indexing_patterns.2.usage_context[3]][30] [order_and_indexing_patterns.2.usage_context[4]][31] [order_and_indexing_patterns.2.usage_context[5]][13] [order_and_indexing_patterns.2.usage_context[6]][32] [order_and_indexing_patterns.2.usage_context[7]][33] [order_and_indexing_patterns.2.usage_context[8]][14] [order_and_indexing_patterns.2.usage_context[9]][34] [order_and_indexing_patterns.2.usage_context[10]][35] [order_and_indexing_patterns.2.usage_context[11]][36] [order_and_indexing_patterns.2.usage_context[12]][37] [order_and_indexing_patterns.2.usage_context[13]][38] [order_and_indexing_patterns.2.usage_context[14]][26] [order_and_indexing_patterns.2.usage_context[15]][39] [order_and_indexing_patterns.2.usage_context[16]][4] [order_and_indexing_patterns.2.usage_context[17]][40] [order_and_indexing_patterns.2.usage_context[18]][41] [order_and_indexing_patterns.2.usage_context[19]][42] The pairing is done based on the original sequence, preserving the relative order of both iterators. [order_and_indexing_patterns.2.usage_context[0]][28] For `IndexedParallelIterator` sources, this provides strong ordering guarantees, leading to low-bug, predictable code. [order_and_indexing_patterns.2.usage_context[0]][28] The `zip_eq` variant is used when it is a logical requirement that both iterators have the same length, as it will panic if they do not. [order_and_indexing_patterns.2.usage_context[0]][28]
+
+#### Anti-Patterns
+Using `zip` when the iterators are expected to have the same length but not verifying it. [order_and_indexing_patterns.2.anti_patterns[0]][28] [order_and_indexing_patterns.2.anti_patterns[1]][1] [order_and_indexing_patterns.2.anti_patterns[2]][29] [order_and_indexing_patterns.2.anti_patterns[3]][30] [order_and_indexing_patterns.2.anti_patterns[4]][31] [order_and_indexing_patterns.2.anti_patterns[5]][13] [order_and_indexing_patterns.2.anti_patterns[6]][32] [order_and_indexing_patterns.2.anti_patterns[7]][33] [order_and_indexing_patterns.2.anti_patterns[8]][14] [order_and_indexing_patterns.2.anti_patterns[9]][34] [order_and_indexing_patterns.2.anti_patterns[10]][35] [order_and_indexing_patterns.2.anti_patterns[11]][36] [order_and_indexing_patterns.2.anti_patterns[12]][37] [order_and_indexing_patterns.2.anti_patterns[13]][38] [order_and_indexing_patterns.2.anti_patterns[14]][26] [order_and_indexing_patterns.2.anti_patterns[15]][39] [order_and_indexing_patterns.2.anti_patterns[16]][4] [order_and_indexing_patterns.2.anti_patterns[17]][40] [order_and_indexing_patterns.2.anti_patterns[18]][41] [order_and_indexing_patterns.2.anti_patterns[19]][42] This can lead to silent data loss if one iterator is shorter, as `zip` will simply stop when the shorter iterator ends. Using `zip` when `zip_eq` is more appropriate from a correctness standpoint is a common source of bugs.
+
+#### Alternate Patterns
+Manually iterating with `enumerate()` and accessing elements from multiple slices by index. [order_and_indexing_patterns.2.alternate_patterns[0]][28] [order_and_indexing_patterns.2.alternate_patterns[1]][1] [order_and_indexing_patterns.2.alternate_patterns[2]][29] [order_and_indexing_patterns.2.alternate_patterns[3]][30] [order_and_indexing_patterns.2.alternate_patterns[4]][31] [order_and_indexing_patterns.2.alternate_patterns[5]][13] [order_and_indexing_patterns.2.alternate_patterns[6]][32] [order_and_indexing_patterns.2.alternate_patterns[7]][33] [order_and_indexing_patterns.2.alternate_patterns[8]][14] [order_and_indexing_patterns.2.alternate_patterns[9]][34] [order_and_indexing_patterns.2.alternate_patterns[10]][35] [order_and_indexing_patterns.2.alternate_patterns[11]][36] [order_and_indexing_patterns.2.alternate_patterns[12]][37] [order_and_indexing_patterns.2.alternate_patterns[13]][38] [order_and_indexing_patterns.2.alternate_patterns[14]][26] [order_and_indexing_patterns.2.alternate_patterns[15]][39] [order_and_indexing_patterns.2.alternate_patterns[16]][4] [order_and_indexing_patterns.2.alternate_patterns[17]][40] [order_and_indexing_patterns.2.alternate_patterns[18]][41] [order_and_indexing_patterns.2.alternate_patterns[19]][42] `zip` is a much cleaner and less error-prone abstraction for this task. [order_and_indexing_patterns.2.alternate_patterns[0]][28]
+
+## 10. Interoperability Bridges—From File Streams to Parallel Pipelines
+Rayon provides patterns for integrating with data sources that are not inherently parallel, such as sequential iterators from files, network streams, or channels.
+
+### `par_bridge()`: Bridging Sequential Iterators to Parallel
+
+#### Code Template
+```rust
+use std::fs::File;
+use std::io::{self, BufRead, BufReader};
+use rayon::prelude::*;
+
+fn process_lines_in_parallel(filename: &str) -> io::Result<usize> {
+ let file = File::open(filename)?;
+ let reader = BufReader::new(file);
+
+ // The sequential `lines()` iterator is bridged to a parallel one.
+ let count = reader.lines()
+.filter_map(Result::ok) // Filter out I/O errors
+.par_bridge() // Convert to ParallelIterator
+.filter(|line| line.contains("ERROR"))
+.count();
+
+ Ok(count)
+}
+```
+[interoperability_patterns.0.code_template[0]][26] [interoperability_patterns.0.code_template[1]][43] [interoperability_patterns.0.code_template[2]][39]
+
+#### When to Use
+This pattern is used to convert any sequential `Iterator` into a `ParallelIterator`, enabling parallel processing of items from sources that are inherently sequential and cannot be easily collected or split. [interoperability_patterns.0.usage_context[0]][26] [interoperability_patterns.0.usage_context[1]][39] It is highly efficient for consuming data from sources like file I/O (e.g., `BufReader::lines()`), network sockets, or channels (`std::sync::mpsc::Receiver`). [interoperability_patterns.0.usage_context[0]][26] The bridge works by pulling items one-by-one from the source under a `Mutex`, allowing multiple threads to consume and process them concurrently. [interoperability_patterns.0.usage_context[0]][26] This is the idiomatic way to introduce parallelism when the data source itself is not a parallel-friendly collection like a `Vec`. [interoperability_patterns.0.usage_context[0]][26]
+
+#### Anti-Patterns
+The primary anti-pattern is using `par_bridge()` when a direct parallel iterator (like `par_iter()` on a `Vec`) is available, as the bridge's `Mutex` can become a performance bottleneck if the producer is slower than the parallel consumers. [interoperability_patterns.0.anti_patterns[0]][26] [interoperability_patterns.0.anti_patterns[2]][43] Another critical anti-pattern is using it with an underlying iterator whose `next()` method calls back into Rayon, which can lead to deadlocks if the thread pool is saturated. [interoperability_patterns.0.anti_patterns[0]][26] Furthermore, `par_bridge()` does not preserve the original order of the iterator, so relying on side-effect order is a bug. [interoperability_patterns.0.anti_patterns[0]][26] [interoperability_patterns.0.anti_patterns[1]][39] Using it with a fast producer and slow consumers can also lead to high memory usage if results are collected without backpressure. [interoperability_patterns.0.anti_patterns[0]][26]
+
+#### Alternate Patterns
+The most common alternative is to first collect all items from the sequential iterator into a `Vec` and then call `.par_iter()` on the vector; this is often more performant if memory allows. [interoperability_patterns.0.alternate_patterns[0]][26] [interoperability_patterns.0.alternate_patterns[1]][43] [interoperability_patterns.0.alternate_patterns[2]][39] [interoperability_patterns.0.alternate_patterns[3]][44] For managing producer/consumer speed mismatches, introducing a bounded channel (e.g., `std::sync::mpsc::sync_channel`) provides backpressure. [interoperability_patterns.0.alternate_patterns[0]][26] If the data source can be logically divided (e.g., a large file), using `par_chunks` on a memory-mapped file or reading chunks manually can be more efficient than a line-by-line bridge. [interoperability_patterns.0.alternate_patterns[0]][26]
+
+### `zip()` / `zip_eq()`: Combining Parallel Data Sources
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let vec1 = vec![1, 2, 3, 4, 5];
+let vec2 = vec![6, 7, 8, 9, 10];
+
+// Zipping two parallel iterators for element-wise computation.
+let dot_product: i32 = vec1.par_iter()
+.zip(vec2.par_iter())
+.map(|(&x, &y)| x * y)
+.sum();
+
+assert_eq!(dot_product, 130);
+```
+[interoperability_patterns.1.code_template[0]][44]
+
+#### When to Use
+The `zip` pattern is used for performing element-wise computations across two or more parallel iterators. [interoperability_patterns.1.usage_context[0]][44] It is highly efficient for tasks like vector arithmetic (dot products, additions) or comparative analysis on multiple slices or vectors. [interoperability_patterns.1.usage_context[0]][44] The operation preserves the relative order of elements from both iterators, ensuring that `vec1[i]` is always paired with `vec2[i]`. [interoperability_patterns.1.usage_context[0]][44] For `IndexedParallelIterator` sources, this provides strong ordering guarantees, leading to low-bug, predictable code. [interoperability_patterns.1.usage_context[0]][44] The `zip_eq` variant is used when it is a logical requirement that both iterators have the same length, as it will panic if they do not. [interoperability_patterns.1.usage_context[0]][44]
+
+#### Anti-Patterns
+A significant anti-pattern is relying on `zip` with an implicit assumption that both iterators have the same length. If the lengths differ, `zip` will silently stop as soon as the shorter iterator is exhausted, which can lead to incorrect results or lost data without any warning. Using `zip` when `zip_eq` is more appropriate from a correctness standpoint is a common source of bugs.
+
+#### Alternate Patterns
+To guard against the mismatched length anti-pattern, an alternative is to add an explicit `assert_eq!(iter1.len(), iter2.len())` before the `zip` operation to fail fast and make the equal-length requirement clear. For cases where a panic is desired on length mismatch, using `zip_eq` is the direct and idiomatic alternative to `zip`.
+
+## 11. State Management & Concurrency Primitives
+Managing state in parallel computations is a primary source of bugs and performance issues. Rayon's idiomatic patterns strongly favor lock-free, message-passing style approaches over shared-memory synchronization.
+
+### `fold-then-reduce`: The Lock-Free Aggregation Workhorse
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+use std::collections::HashMap;
+
+let data = vec![1, 2, 2, 3, 3, 3, 4, 4, 4, 4];
+
+// Build a frequency map (histogram) in parallel without locks.
+let freqs: HashMap<i32, usize> = data.par_iter()
+ // 1. FOLD: Each thread creates a local HashMap and accumulates counts for its portion of the data.
+.fold(|| HashMap::new(), |mut acc, &x| {
+ *acc.entry(x).or_insert(0) += 1;
+ acc
+ })
+ // 2. REDUCE: The local HashMaps from each thread are merged into a single final map.
+.reduce_with(|mut m1, m2| {
+ for (k, v) in m2 {
+ *m1.entry(k).or_default() += v;
+ }
+ m1
+ })
+.unwrap_or_default();
+```
+[state_management_patterns.0.code_template[0]][3]
+
+#### When to Use
+This is the most idiomatic and highly efficient pattern in Rayon for aggregation tasks that build state, such as creating histograms, summing values into a larger type, or building a collection. [state_management_patterns.0.usage_context[3]][3] The pattern works by giving each parallel thread its own local accumulator (e.g., a `HashMap` or a `String`). [state_management_patterns.0.usage_context[0]][4] [state_management_patterns.0.usage_context[1]][2] Each thread 'folds' its portion of the input data into its local state. [state_management_patterns.0.usage_context[0]][4] Once all threads are done, their local results are 'reduced' (merged) into a single final result. [state_management_patterns.0.usage_context[3]][3] This completely avoids the use of locks (like `Mutex`) in the hot path, eliminating contention and allowing the computation to scale almost linearly with the number of cores. [state_management_patterns.0.usage_context[0]][4] [state_management_patterns.0.usage_context[2]][5] This leads to both high efficiency and low-bug code, as it sidesteps the complexities and potential deadlocks of manual locking. [state_management_patterns.0.usage_context[0]][4]
+
+#### Anti-Patterns
+The primary anti-pattern is attempting to solve the same problem by using a single shared data structure protected by a lock (e.g., `Arc<Mutex<HashMap<...>>>`) and having each thread acquire the lock for every single item it processes. [state_management_patterns.0.anti_patterns[0]][2] [state_management_patterns.0.anti_patterns[1]][5] This serializes the execution, as threads spend most of their time waiting for the lock, completely negating the benefits of parallelism and often resulting in code that is significantly slower than its sequential counterpart. [state_management_patterns.0.anti_patterns[1]][5] This is frequently referred to as 'killing parallelism'. [state_management_patterns.0.anti_patterns[0]][2]
+
+#### Alternate Patterns
+For very simple aggregations, methods like `.sum()` or `.count()` are higher-level abstractions that use this pattern internally. [state_management_patterns.0.alternate_patterns[0]][2] [state_management_patterns.0.alternate_patterns[1]][4] [state_management_patterns.0.alternate_patterns[2]][5] For more complex scenarios where the state is not easily mergeable or requires more fine-grained control, an alternative is to use `rayon::scope` to manually create a per-thread data structure (e.g., a `Vec` of accumulators, one for each thread) and have each spawned task work on its designated slot, followed by a final manual merge step after the scope completes. [state_management_patterns.0.alternate_patterns[0]][2]
+
+### `Arc<Mutex<T>>` / Atomics: For Unavoidable Shared State
+
+#### Code Template
+```rust
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+use rayon::prelude::*;
+
+// Use an atomic for a simple, shared counter when fold-reduce is not suitable.
+let counter = Arc::new(AtomicUsize::new(0));
+
+(0..10_000).into_par_iter().for_each_with(counter.clone(), |c, _| {
+ // fetch_add is an atomic operation, faster than a Mutex for simple increments.
+ c.fetch_add(1, Ordering::Relaxed);
+});
+
+let final_count = counter.load(Ordering::SeqCst);
+assert_eq!(final_count, 10_000);
+```
+[state_management_patterns.1.code_template[0]][4] [state_management_patterns.1.code_template[1]][2] [state_management_patterns.1.code_template[2]][5]
+
+#### When to Use
+This pattern should be used only when shared mutable state is unavoidable and the 'fold-then-reduce' pattern is not applicable. [state_management_patterns.1.usage_context[0]][2] [state_management_patterns.1.usage_context[1]][4] [state_management_patterns.1.usage_context[2]][5] This can occur with complex state that cannot be easily merged or when interacting with external resources. [state_management_patterns.1.usage_context[1]][4] Atomics (`AtomicUsize`, `AtomicBool`, etc.) are the preferred choice for simple, primitive types like counters, as they are generally more performant than mutexes. [state_management_patterns.1.usage_context[1]][4] For more complex data structures (e.g., a cache that needs to be updated), `Arc<Mutex<T>>` (for exclusive access) or `Arc<RwLock<T>>` (for read-heavy workloads) must be used. [state_management_patterns.1.usage_context[1]][4] This pattern ensures correctness and prevents data races, but it introduces the potential for performance bottlenecks due to contention. [state_management_patterns.1.usage_context[1]][4] [state_management_patterns.1.usage_context[2]][5]
+
+#### Anti-Patterns
+The most severe anti-pattern is acquiring a lock for every single element in a hot loop (e.g., inside `par_iter().for_each(...)`). [state_management_patterns.1.anti_patterns[0]][2] [state_management_patterns.1.anti_patterns[2]][5] This introduces extreme contention and overhead, often making the parallel code slower than a sequential version. [state_management_patterns.1.anti_patterns[2]][5] Another anti-pattern is holding a lock for a long duration (coarse-grained locking), which blocks other threads and serializes execution. [state_management_patterns.1.anti_patterns[0]][2] Relying on the order of operations on the shared state is also incorrect, as Rayon's work-stealing scheduler is non-deterministic. [state_management_patterns.1.anti_patterns[1]][4]
+
+#### Alternate Patterns
+The primary and strongly preferred alternative is the 'fold-then-reduce' pattern, which avoids locks entirely. [state_management_patterns.1.alternate_patterns[0]][5] [state_management_patterns.1.alternate_patterns[1]][2] [state_management_patterns.1.alternate_patterns[2]][4] If locking is necessary, a 'batched lock acquisition' pattern can mitigate the overhead: process a chunk of items locally into a temporary structure, then acquire the lock only once to merge the batch results into the shared state. [state_management_patterns.1.alternate_patterns[1]][2] This significantly reduces the frequency of lock acquisitions and contention. [state_management_patterns.1.alternate_patterns[1]][2]
+
+## 12. Config & Tuning—Thread Pools, Granularity, Environment Knobs
+Effectively using Rayon involves not just choosing the right parallel algorithm but also configuring the execution environment. Rayon provides several knobs for tuning performance, managing resources, and ensuring reproducibility.
+
+### `ThreadPoolBuilder` (Global Configuration)
+
+#### Code Template
+```rust
+// At the start of your main function.
+rayon::ThreadPoolBuilder::new()
+.num_threads(8) // Set a specific number of threads.
+.stack_size(4 * 1024 * 1024) // Set stack size for each thread.
+.build_global()
+.expect("Failed to build the global Rayon thread pool.");
+```
+[configuration_and_tuning_patterns.0.code_template[0]][45] [configuration_and_tuning_patterns.0.code_template[1]][46] [configuration_and_tuning_patterns.0.code_template[2]][47] [configuration_and_tuning_patterns.0.code_template[3]][48] [configuration_and_tuning_patterns.0.code_template[4]][49] [configuration_and_tuning_patterns.0.code_template[5]][50] [configuration_and_tuning_patterns.0.code_template[6]][51]
+
+#### When to Use
+This pattern is used to configure the global Rayon thread pool for the entire application. [configuration_and_tuning_patterns.0.usage_context[0]][46] [configuration_and_tuning_patterns.0.usage_context[1]][47] [configuration_and_tuning_patterns.0.usage_context[2]][50] It should be called once at program startup (e.g., in `main`). [configuration_and_tuning_patterns.0.usage_context[0]][46] It provides high efficiency by allowing you to tailor the pool to the specific hardware and workload, such as limiting concurrency to avoid oversubscribing the CPU, increasing stack size to prevent overflows in deeply recursive parallel tasks, or setting a custom panic handler for robust error handling. [configuration_and_tuning_patterns.0.usage_context[3]][49] [configuration_and_tuning_patterns.0.usage_context[4]][52] [configuration_and_tuning_patterns.0.usage_context[5]][53] This leads to predictable performance and resource usage. [configuration_and_tuning_patterns.0.usage_context[0]][46]
+
+#### Anti-Patterns
+Calling `build_global()` more than once during the application's lifetime is an anti-pattern; it will return an error on subsequent calls. [configuration_and_tuning_patterns.0.anti_patterns[0]][45] [configuration_and_tuning_patterns.0.anti_patterns[1]][46] [configuration_and_tuning_patterns.0.anti_patterns[2]][47] Configuring the pool with an incorrect number of threads (e.g., far more threads than CPU cores) can lead to performance degradation due to excessive context switching. [configuration_and_tuning_patterns.0.anti_patterns[3]][51] [configuration_and_tuning_patterns.0.anti_patterns[4]][54] [configuration_and_tuning_patterns.0.anti_patterns[5]][52] [configuration_and_tuning_patterns.0.anti_patterns[6]][53] [configuration_and_tuning_patterns.0.anti_patterns[7]][48]
+
+#### Alternate Patterns
+The simplest alternative for controlling the thread count is to set the `RAYON_NUM_THREADS` environment variable. [configuration_and_tuning_patterns.0.alternate_patterns[0]][45] [configuration_and_tuning_patterns.0.alternate_patterns[1]][51] This is often sufficient for simple configuration and is useful in scripting or CI environments. [configuration_and_tuning_patterns.0.alternate_patterns[0]][45] If no configuration is provided, Rayon defaults to using a number of threads equal to the number of logical CPUs, which is a reasonable default for many CPU-bound workloads. [configuration_and_tuning_patterns.0.alternate_patterns[0]][45]
+
+### `ThreadPoolBuilder` (Per-Task Custom Pool)
+
+#### Code Template
+```rust
+let custom_pool = rayon::ThreadPoolBuilder::new()
+.num_threads(2)
+.build()
+.expect("Failed to build a custom pool.");
+
+// Run a specific parallel computation within the custom pool.
+custom_pool.install(|| {
+ let data = vec![1, 2, 3, 4, 5, 6, 7, 8];
+ let sum: i32 = data.par_iter().sum();
+ println!("Sum computed in custom pool: {}", sum);
+});
+```
+[configuration_and_tuning_patterns.1.code_template[0]][46] [configuration_and_tuning_patterns.1.code_template[1]][47] [configuration_and_tuning_patterns.1.code_template[2]][54] [configuration_and_tuning_patterns.1.code_template[3]][52] [configuration_and_tuning_patterns.1.code_template[4]][53] [configuration_and_tuning_patterns.1.code_template[5]][50] [configuration_and_tuning_patterns.1.code_template[6]][51]
+
+#### When to Use
+This pattern is used to isolate specific workloads or limit their concurrency without affecting the global thread pool. [configuration_and_tuning_patterns.1.usage_context[0]][48] [configuration_and_tuning_patterns.1.usage_context[1]][52] [configuration_and_tuning_patterns.1.usage_context[2]][53] [configuration_and_tuning_patterns.1.usage_context[3]][54] [configuration_and_tuning_patterns.1.usage_context[4]][50] [configuration_and_tuning_patterns.1.usage_context[5]][46] [configuration_and_tuning_patterns.1.usage_context[6]][47] [configuration_and_tuning_patterns.1.usage_context[7]][51] [configuration_and_tuning_patterns.1.usage_context[8]][45] It is highly effective for building robust systems with different priority tasks (e.g., a high-priority pool for user requests and a low-priority pool for background jobs). [configuration_and_tuning_patterns.1.usage_context[0]][48] It is also the primary idiom for writing reliable, non-flaky tests, as it isolates each test's parallel work. [configuration_and_tuning_patterns.1.usage_context[0]][48] This leads to both high efficiency (by preventing resource starvation) and low bugs (by making tests reproducible). [configuration_and_tuning_patterns.1.usage_context[0]][48]
+
+#### Anti-Patterns
+A major anti-pattern is creating many short-lived custom pools, for example, one for every small task. [configuration_and_tuning_patterns.1.anti_patterns[0]][48] [configuration_and_tuning_patterns.1.anti_patterns[4]][54] [configuration_and_tuning_patterns.1.anti_patterns[5]][50] The overhead of creating and tearing down a thread pool is significant, and this practice will severely degrade performance. [configuration_and_tuning_patterns.1.anti_patterns[0]][48] Another anti-pattern is nesting pools (creating a pool from within a thread of another pool), which can lead to thread oversubscription and deadlocks. [configuration_and_tuning_patterns.1.anti_patterns[1]][55] [configuration_and_tuning_patterns.1.anti_patterns[2]][31] [configuration_and_tuning_patterns.1.anti_patterns[3]][56]
+
+#### Alternate Patterns
+For most simple applications, using the default global pool is sufficient. [configuration_and_tuning_patterns.1.alternate_patterns[0]][45] [configuration_and_tuning_patterns.1.alternate_patterns[1]][50] [configuration_and_tuning_patterns.1.alternate_patterns[2]][54] [configuration_and_tuning_patterns.1.alternate_patterns[3]][46] [configuration_and_tuning_patterns.1.alternate_patterns[4]][47] In asynchronous contexts like Tokio, the idiomatic pattern is not to create a custom Rayon pool but to offload the blocking Rayon work to Tokio's dedicated blocking thread pool via `tokio::task::spawn_blocking`. [introduction_to_rayon_idioms[114]][57] [introduction_to_rayon_idioms[214]][58]
+
+### Granularity Tuning with `with_min_len()`
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let mut data: Vec<i32> = (0..1_000_000).collect();
+
+// Ensure each parallel job processes at least 1000 items.
+data.par_iter_mut()
+.with_min_len(1000)
+.for_each(|item| {
+ // Simulate a heavy computation
+ *item *= 2;
+ });
+```
+
+#### When to Use
+The `with_min_len()` adaptor is an idiom for performance tuning on `IndexedParallelIterator`s. It is used when the work per item is computationally expensive. By setting a minimum length, you prevent Rayon from splitting the work into excessively small jobs. This ensures that each parallel task has a substantial amount of work, which amortizes the overhead of task scheduling and work-stealing, leading to higher efficiency.
+
+#### Anti-Patterns
+Using this with a value that is too large can hinder load balancing, as it may leave some threads idle if the work cannot be split finely enough. It is not effective for iterators that are not indexed, as the length cannot be known in advance.
+
+#### Alternate Patterns
+An alternative is to use `par_chunks()` or `par_chunks_mut()` to manually create coarser-grained tasks. This provides explicit control over chunk size. For very complex, non-uniform workloads, manually splitting the work with `rayon::join` or `rayon::scope` can offer more fine-grained control than a simple length hint.
+
+### Explicit Chunking with `par_chunks()`
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let mut array = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+// Process the slice in mutable chunks of size 3 in parallel.
+array.par_chunks_mut(3).for_each(|chunk| {
+ // This closure runs in parallel for each chunk.
+ chunk.reverse();
+});
+
+assert_eq!(array, [2, 1, 0, 5, 4, 3, 8, 7, 6, 9]);
+```
+[configuration_and_tuning_patterns.3.code_template[0]][46] [configuration_and_tuning_patterns.3.code_template[1]][47] [configuration_and_tuning_patterns.3.code_template[2]][52] [configuration_and_tuning_patterns.3.code_template[3]][53] [configuration_and_tuning_patterns.3.code_template[4]][51] [configuration_and_tuning_patterns.3.code_template[5]][49] [configuration_and_tuning_patterns.3.code_template[6]][54]
+
+#### When to Use
+This pattern is idiomatic for processing large, contiguous blocks of data, such as in image processing, scientific computing, or matrix operations. [configuration_and_tuning_patterns.3.usage_context[0]][46] [configuration_and_tuning_patterns.3.usage_context[1]][47] [configuration_and_tuning_patterns.3.usage_context[2]][52] [configuration_and_tuning_patterns.3.usage_context[3]][53] [configuration_and_tuning_patterns.3.usage_context[4]][54] [configuration_and_tuning_patterns.3.usage_context[5]][51] [configuration_and_tuning_patterns.3.usage_context[6]][49] It provides a form of coarse-grained parallelism that is often more efficient than per-element parallelism. [configuration_and_tuning_patterns.3.usage_context[0]][46] By processing a chunk at a time, it reduces scheduling overhead and can significantly improve cache locality, as the data within a chunk is processed by a single thread. [configuration_and_tuning_patterns.3.usage_context[0]][46] This leads to high efficiency. [configuration_and_tuning_patterns.3.usage_context[0]][46]
+
+#### Anti-Patterns
+The primary anti-pattern is using a very small `chunk_size`. [configuration_and_tuning_patterns.3.anti_patterns[0]][46] [configuration_and_tuning_patterns.3.anti_patterns[1]][47] [configuration_and_tuning_patterns.3.anti_patterns[2]][49] [configuration_and_tuning_patterns.3.anti_patterns[3]][54] [configuration_and_tuning_patterns.3.anti_patterns[4]][52] [configuration_and_tuning_patterns.3.anti_patterns[5]][53] [configuration_and_tuning_patterns.3.anti_patterns[6]][51] This defeats the purpose of chunking and reintroduces the overhead of managing an excessive number of tiny parallel tasks, which can make performance worse than a simple `par_iter()`. [configuration_and_tuning_patterns.3.anti_patterns[0]][46] Also, one must be careful not to introduce aliasing of shared mutable state across different chunks. [configuration_and_tuning_patterns.3.anti_patterns[0]][46]
+
+#### Alternate Patterns
+For more dynamic control over splitting, `with_min_len()` can be used. For non-slice data, one can use iterator adaptors like `itertools::Itertools::chunks` combined with `par_bridge()` to achieve a similar effect. For dividing work into a few very large, distinct pieces, `rayon::scope` is a suitable alternative.
+
+## 13. Wasm Playbook—Turning Web Workers into Rayon Threads
+By default, Rayon on a WebAssembly (Wasm) target runs sequentially. [platform_specific_patterns_wasm.0.usage_context[2]][40] However, with the right configuration, it's possible to enable true multithreading in the browser by bridging Rayon to Web Workers.
+
+### Enabling Multithreading with `wasm-bindgen-rayon`
+
+#### Code Template
+```rust
+// 1. In Cargo.toml:
+// [dependencies]
+// rayon = "1.11"
+// wasm-bindgen = "0.2"
+// wasm-bindgen-rayon = "1.2"
+
+// 2. In Rust code (e.g., lib.rs):
+use wasm_bindgen::prelude::*;
+// Re-export the thread pool initialization function.
+pub use wasm_bindgen_rayon::init_thread_pool;
+
+#[wasm_bindgen]
+pub fn my_parallel_func(input: &[i32]) -> i32 {
+ input.par_iter().map(|n| n * n).sum()
+}
+
+// 3. In JavaScript:
+// import init, { initThreadPool, my_parallel_func } from './pkg/index.js';
+//
+// async function run() {
+// await init(); // Initialize the Wasm module
+// // Initialize Rayon's thread pool with browser's Web Workers
+// await initThreadPool(navigator.hardwareConcurrency);
+// // Now parallel functions can be called
+// const result = my_parallel_func(new Int32Array([1, 2, 3, 4]));
+// }
+// run();
+```
+[platform_specific_patterns_wasm.0.code_template[0]][40] [platform_specific_patterns_wasm.0.code_template[1]][59] [platform_specific_patterns_wasm.0.code_template[2]][60]
+
+#### When to Use
+This is the fundamental pattern to unlock true multithreading for Rayon in a browser environment. [platform_specific_patterns_wasm.0.usage_context[0]][60] [platform_specific_patterns_wasm.0.usage_context[1]][59] [platform_specific_patterns_wasm.0.usage_context[2]][40] By default, Rayon on the `wasm32-unknown-unknown` target falls back to sequential execution. [platform_specific_patterns_wasm.0.usage_context[2]][40] This pattern uses the `wasm-bindgen-rayon` adapter to bridge Rayon's thread spawning mechanism to the browser's Web Worker API. [platform_specific_patterns_wasm.0.usage_context[0]][60] It is essential for achieving high efficiency in CPU-bound computations within Wasm. [platform_specific_patterns_wasm.0.usage_context[0]][60] This setup requires a nightly Rust toolchain and specific build flags (`RUSTFLAGS='-C target-feature=+atomics,+bulk-memory,+mutable-globals'`). [platform_specific_patterns_wasm.0.usage_context[2]][40]
+
+#### Anti-Patterns
+Expecting any parallel speedup without this setup. [platform_specific_patterns_wasm.0.anti_patterns[0]][40] [platform_specific_patterns_wasm.0.anti_patterns[1]][59] Rayon will compile and run, but it will be single-threaded. [platform_specific_patterns_wasm.0.anti_patterns[0]][40] Another anti-pattern is blocking the main browser thread; long-running synchronous Rayon computations must be offloaded to a worker. [platform_specific_patterns_wasm.0.anti_patterns[0]][40] Using the `--target bundler` with `wasm-pack` is also an anti-pattern as it's unsupported by `wasm-bindgen-rayon` which requires `--target web`. [platform_specific_patterns_wasm.0.anti_patterns[0]][40]
+
+#### Alternate Patterns
+The default behavior is a sequential fallback; no setup is needed, but there is no parallelism. [platform_specific_patterns_wasm.0.alternate_patterns[0]][59] [platform_specific_patterns_wasm.0.alternate_patterns[1]][40] [platform_specific_patterns_wasm.0.alternate_patterns[2]][60] [platform_specific_patterns_wasm.0.alternate_patterns[3]][61] For complex applications, a more robust alternative is to instantiate the entire Wasm module and its Rayon pool inside a dedicated Web Worker, communicating with it from the main thread via a library like Comlink to ensure the UI thread is never blocked. [platform_specific_patterns_wasm.0.alternate_patterns[0]][59]
+
+### Configuring Cross-Origin Isolation for `SharedArrayBuffer`
+
+#### Code Template
+```
+On the web server hosting the application, configure the following HTTP headers for the main HTML document:
+
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+```
+
+#### When to Use
+This pattern is a mandatory prerequisite for enabling WebAssembly threads in modern browsers. [platform_specific_patterns_wasm.1.usage_context[0]][62] [platform_specific_patterns_wasm.1.usage_context[1]][59] [platform_specific_patterns_wasm.1.usage_context[2]][40] [platform_specific_patterns_wasm.1.usage_context[3]][60] [platform_specific_patterns_wasm.1.usage_context[4]][61] Wasm threads rely on `SharedArrayBuffer` to share memory between workers. [platform_specific_patterns_wasm.1.usage_context[0]][62] For security reasons (to mitigate Spectre-like vulnerabilities), browsers only enable `SharedArrayBuffer` on pages that are in a 'cross-origin isolated' state. [platform_specific_patterns_wasm.1.usage_context[0]][62] Applying these headers correctly ensures the feature is available, which is critical for low-bug deployment as it prevents runtime errors related to unavailable browser APIs. [platform_specific_patterns_wasm.1.usage_context[0]][62]
+
+#### Anti-Patterns
+Attempting to initialize or use the Wasm thread pool on a page that is not cross-origin isolated. [platform_specific_patterns_wasm.1.anti_patterns[0]][62] [platform_specific_patterns_wasm.1.anti_patterns[1]][59] [platform_specific_patterns_wasm.1.anti_patterns[2]][40] [platform_specific_patterns_wasm.1.anti_patterns[3]][61] [platform_specific_patterns_wasm.1.anti_patterns[4]][60] This will fail, and the application will either error out or fall back to single-threaded execution, negating any performance benefits of parallelism. [platform_specific_patterns_wasm.1.anti_patterns[0]][62]
+
+#### Alternate Patterns
+There is no direct alternative for enabling multithreading. [platform_specific_patterns_wasm.1.alternate_patterns[0]][40] [platform_specific_patterns_wasm.1.alternate_patterns[1]][59] [platform_specific_patterns_wasm.1.alternate_patterns[2]][60] [platform_specific_patterns_wasm.1.alternate_patterns[3]][61] The only other option is to forgo parallelism and use a single-threaded Wasm build, which does not require these headers. [platform_specific_patterns_wasm.1.alternate_patterns[0]][40]
+
+### Sequential Fallback for Compatibility
+
+#### Code Template
+```javascript
+// In JavaScript, use a feature detection library
+import { threads } from 'wasm-feature-detect';
+
+async function loadWasm() {
+ if (await threads()) {
+ // Browser supports Wasm threads
+ console.log('Loading multithreaded version.');
+ const wasm = await import('./pkg-with-threads/index.js');
+ await wasm.default();
+ await wasm.initThreadPool(navigator.hardwareConcurrency);
+ return wasm;
+ } else {
+ // Fallback to single-threaded version
+ console.log('Loading single-threaded version.');
+ const wasm = await import('./pkg-without-threads/index.js');
+ await wasm.default();
+ return wasm;
+ }
+}
+
+const myApp = await loadWasm();
+myApp.run_computation();
+```
+[platform_specific_patterns_wasm.2.code_template[0]][59] [platform_specific_patterns_wasm.2.code_template[1]][60] [platform_specific_patterns_wasm.2.code_template[2]][40] [platform_specific_patterns_wasm.2.code_template[3]][61]
+
+#### When to Use
+This pattern is used to build robust, production-grade applications that can run in a wide range of environments, including older browsers or configurations where WebAssembly threads or `SharedArrayBuffer` are not supported. [platform_specific_patterns_wasm.2.usage_context[0]][60] [platform_specific_patterns_wasm.2.usage_context[1]][40] It involves creating two separate builds of the Wasm module (one with threads, one without) and using JavaScript feature detection to dynamically load the appropriate one. [platform_specific_patterns_wasm.2.usage_context[0]][60] This leads to low bugs by gracefully handling environmental limitations instead of failing. [platform_specific_patterns_wasm.2.usage_context[0]][60]
+
+#### Anti-Patterns
+Shipping only a multithreaded build of the application. [platform_specific_patterns_wasm.2.anti_patterns[0]][40] [platform_specific_patterns_wasm.2.anti_patterns[1]][60] [platform_specific_patterns_wasm.2.anti_patterns[2]][59] [platform_specific_patterns_wasm.2.anti_patterns[3]][61] This will cause the application to fail to load or run in browsers that do not support Wasm threads, leading to a poor user experience. [platform_specific_patterns_wasm.2.anti_patterns[0]][40]
+
+#### Alternate Patterns
+The main alternative is to ship only a single-threaded build. [platform_specific_patterns_wasm.2.alternate_patterns[0]][60] [platform_specific_patterns_wasm.2.alternate_patterns[1]][61] [platform_specific_patterns_wasm.2.alternate_patterns[2]][59] [platform_specific_patterns_wasm.2.alternate_patterns[3]][40] This maximizes compatibility at the cost of sacrificing performance in capable environments. [platform_specific_patterns_wasm.2.alternate_patterns[0]][60]
+
+## 14. Testing & Reproducibility—Making Parallel Code Deterministic
+Testing parallel code is notoriously difficult due to non-determinism. Rayon provides idioms to create reliable, reproducible, and non-flaky tests.
+
+### Per-Test Custom Thread Pool
+
+#### Code Template
+```rust
+#[test]
+fn my_isolated_parallel_test() {
+ // Create a dedicated pool with a fixed number of threads for this test.
+ let pool = rayon::ThreadPoolBuilder::new()
+.num_threads(4)
+.build()
+.unwrap();
+
+ // Use `install` to run code within this specific pool.
+ // Any Rayon operations inside this closure will use `pool`.
+ pool.install(|| {
+ let sum: i32 = (0..100).into_par_iter().sum();
+ assert_eq!(sum, 4950);
+ });
+}
+```
+[testing_and_reproducibility_patterns.0.code_template[0]][9] [testing_and_reproducibility_patterns.0.code_template[1]][6]
+
+#### When to Use
+This is the most critical idiom for writing reliable and reproducible tests for Rayon-based code. [testing_and_reproducibility_patterns.0.usage_context[0]][9] [testing_and_reproducibility_patterns.0.usage_context[1]][6] It ensures that each test runs in an isolated environment with a known number of threads, preventing interference from other tests that may be running concurrently (e.g., in CI). [testing_and_reproducibility_patterns.0.usage_context[0]][9] This isolation eliminates a major source of flakiness caused by contention for the shared global thread pool, leading to low-bug, deterministic test suites. [testing_and_reproducibility_patterns.0.usage_context[0]][9]
+
+#### Anti-Patterns
+The primary anti-pattern is relying on the ambient global thread pool for tests. [testing_and_reproducibility_patterns.0.anti_patterns[0]][9] [testing_and_reproducibility_patterns.0.anti_patterns[1]][6] The global pool is shared state, and its availability and performance can be affected by other tests, leading to unpredictable timing, resource contention, and flaky test failures that are difficult to debug. [testing_and_reproducibility_patterns.0.anti_patterns[0]][9]
+
+#### Alternate Patterns
+For maximum determinism, an alternative is to run the test in a single-threaded mode by creating a pool with `.num_threads(1)`. Another approach is to configure the global pool for the entire test run using the `RAYON_NUM_THREADS` environment variable, though this provides less isolation than the per-test pool pattern.
+
+### Single-Threaded Mode for Debugging
+
+#### Code Template
+```rust
+// Option 1: Via environment variable for the whole test run
+// $ RAYON_NUM_THREADS=1 cargo test
+
+// Option 2: Programmatically for a single test
+#[test]
+fn my_deterministic_test() {
+ let pool = rayon::ThreadPoolBuilder::new().num_threads(1).build().unwrap();
+ pool.install(|| {
+ // This code will run sequentially.
+ let v: Vec<_> = (0..4).into_par_iter().map(|i| i).collect();
+ assert_eq!(v, vec![0, 1, 2, 3]);
+ });
+}
+```
+
+#### When to Use
+This pattern is used to force Rayon's execution into a single thread, making the behavior of parallel code deterministic and sequential. It is an invaluable tool for debugging suspected logical race conditions or other concurrency-related bugs. By removing the non-determinism of the work-stealing scheduler, it allows developers to trace the execution path predictably, leading to faster bug identification and resolution.
+
+#### Anti-Patterns
+An anti-pattern is using single-threaded mode to simply make a flaky test pass without understanding the underlying concurrency bug. This masks the problem, which will still exist when the code is run in a multi-threaded production environment.
+
+#### Alternate Patterns
+Instead of forcing single-threaded execution, one can use other determinism-oriented patterns, such as replacing `find_any` with `find_first`, or collecting results and sorting them before assertion to ensure a predictable order.
+
+### Deterministic Search and Predicates
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let data = vec![1, 5, 2, 4, 3, 3];
+
+// Use `position_first` to get a deterministic result.
+let first_three = data.par_iter().position_first(|&&x| x == 3);
+assert_eq!(first_three, Some(4));
+
+// DO NOT use `position_any` in a test asserting a specific index,
+// as it could return Some(4) or Some(5) non-deterministically.
+// let any_three = data.par_iter().position_any(|&&x| x == 3);
+```
+
+#### When to Use
+When testing search functionality, it is crucial to use deterministic methods to avoid flaky tests. Methods like `find_first`, `position_first`, `find_last`, and `position_last` guarantee they will return the same element (or index) as their sequential counterparts, regardless of parallel execution order. This ensures that test assertions against specific values or positions are reliable and reproducible, leading to a low-bug test suite.
+
+#### Anti-Patterns
+A common and critical anti-pattern is using non-deterministic methods like `find_any` or `position_any` in a correctness test. These methods prioritize performance by returning the first match found by any thread, which can vary between runs. Using them in an assertion that expects a specific outcome will inevitably lead to flaky tests.
+
+#### Alternate Patterns
+If the goal is simply to test that *any* valid item is found, `find_any` can be used, but the assertion must be flexible (e.g., `assert!(result.is_some())` or `assert!(valid_results.contains(&result.unwrap()))`). For ordered data, another alternative is to `collect()` the results and then use a standard `binary_search`.
+
+### Ordered Side-Effects (Collect-Then-Act)
+
+#### Code Template
+```rust
+use rayon::prelude::*;
+
+let data = vec![1, 2, 3, 4];
+
+// 1. Perform parallel computation and collect results.
+// `collect()` on an IndexedParallelIterator preserves order.
+let results: Vec<String> = data.par_iter()
+.map(|&i| format!("Computed value {}", i * i))
+.collect();
+
+// 2. Perform assertions or side-effects on the ordered results.
+assert_eq!(results, vec![
+ "Computed value 1",
+ "Computed value 4",
+ "Computed value 9",
+ "Computed value 16",
+]);
+```
+[testing_and_reproducibility_patterns.3.code_template[0]][26] [testing_and_reproducibility_patterns.3.code_template[1]][39]
+
+#### When to Use
+This pattern is used in tests that need to verify outputs that depend on the original sequence order. [testing_and_reproducibility_patterns.3.usage_context[0]][26] [testing_and_reproducibility_patterns.3.usage_context[1]][39] The parallel, CPU-bound work is performed first using methods like `map`. [testing_and_reproducibility_patterns.3.usage_context[0]][26] The `collect()` method then efficiently reassembles the results into a `Vec` that preserves the original order. [testing_and_reproducibility_patterns.3.usage_context[0]][26] Finally, the test performs assertions on this ordered collection. [testing_and_reproducibility_patterns.3.usage_context[0]][26] This separates the non-deterministic parallel computation from the deterministic verification, leading to robust and reliable tests. [testing_and_reproducibility_patterns.3.usage_context[0]][26]
+
+#### Anti-Patterns
+The anti-pattern is to perform ordered assertions or have ordered side-effects (like printing or logging) directly inside a parallel closure like `for_each`. [testing_and_reproducibility_patterns.3.anti_patterns[0]][26] [testing_and_reproducibility_patterns.3.anti_patterns[1]][39] The execution order is not guaranteed, so such tests will be inherently flaky. [testing_and_reproducibility_patterns.3.anti_patterns[0]][26] [testing_and_reproducibility_patterns.3.anti_patterns[1]][39]
+
+#### Alternate Patterns
+For streaming ordered results without collecting everything first (e.g., in a benchmark that logs progress), a more complex pattern involving `enumerate()` to tag items with their index and a separate consumer thread to reorder them from a channel can be used. [testing_and_reproducibility_patterns.3.alternate_patterns[0]][26] [testing_and_reproducibility_patterns.3.alternate_patterns[1]][39] However, for most test cases, 'collect-then-act' is simpler and sufficient. [testing_and_reproducibility_patterns.3.alternate_patterns[0]][26]
+
+## 15. Real-World Pipelines—Lessons from Rayon Demos
+The `rayon-demo` directory in the official repository provides a collection of benchmarks that illustrate idiomatic Rayon usage for classic parallel computing problems. 
+
+### N-body Simulation
+
+#### Illustrated Pattern
+Toggling between sequential and parallel execution for an embarrassingly parallel numeric kernel. [demonstrated_pipelines_from_rayon_demo.0.illustrated_pattern[0]][63]
+
+#### Code Template Concept
+The demo uses a command-line flag (`--mode seq` vs. `--mode par`) to switch between different execution functions. This conceptually represents converting a sequential loop like `for body in &bodies { compute_forces(body); }` into a parallel one: `bodies.par_iter().for_each(|body| compute_forces(body));`. The demo also includes a `parreduce` mode, suggesting a `fold/reduce` pattern for aggregating results in parallel.
+
+#### When to Use
+This pattern is ideal for embarrassingly parallel numeric kernels, where the computation for each element in a collection (e.g., a celestial body) is independent of the others within the same time step. [demonstrated_pipelines_from_rayon_demo.0.usage_context[0]][63] This is a classic high-efficiency use case for Rayon, as the work can be easily divided among CPU cores with minimal synchronization. [demonstrated_pipelines_from_rayon_demo.0.usage_context[0]][63]
+
+#### Anti-Patterns Avoided
+The N-body problem is computationally intensive, ensuring that the work per item is substantial enough to overcome the overhead of parallelization. [demonstrated_pipelines_from_rayon_demo.0.anti_patterns_avoided[0]][63] This avoids the common anti-pattern of parallelizing tiny, memory-bound kernels where the setup cost would dominate and lead to a slowdown. [demonstrated_pipelines_from_rayon_demo.0.anti_patterns_avoided[0]][63]
+
+#### Alternate Patterns Shown
+The demo showcases multiple parallel strategies for the same problem: a direct parallel iterator (`par`) and a map-reduce style aggregation (`parreduce`). This illustrates that even for a single problem, different Rayon APIs can be applied depending on the specific aggregation needs, offering flexibility in implementation.
+
+### Game of Life
+
+#### Illustrated Pattern
+Comparing different parallel iterator creation methods (`into_par_iter` vs. `par_bridge`) for a grid-based computation.
+
+#### Code Template Concept
+The `Board` struct contains distinct methods for benchmarking. The `parallel_next_generation` method uses `(0..self.len()).into_par_iter().map(...)`, which is the canonical way to parallelize a loop over an indexed collection. The `par_bridge_next_generation` method uses `(0..self.len()).par_bridge().map(...)`, demonstrating the use of the `par_bridge` adapter for iterators that might not be directly convertible.
+
+#### When to Use
+This pipeline is used for grid-based cellular automata where the next state of each cell is computed independently based on its local neighborhood. This is another example of an embarrassingly parallel problem where Rayon provides significant efficiency gains by processing different parts of the grid concurrently.
+
+#### Anti-Patterns Avoided
+By using `.collect()` to gather the results of the `map` operation into a new grid, the demo avoids the major anti-pattern of using a shared lock (`Mutex`) to update a single grid structure from multiple threads. Such locking would serialize execution and destroy parallelism.
+
+#### Alternate Patterns Shown
+The demo explicitly includes and benchmarks `par_bridge()` as an alternative to `into_par_iter()`. This highlights `par_bridge` as a flexible, general-purpose tool for applying parallelism to any standard `Iterator`, even if it's less performant than a direct parallel iterator on a collection that can be efficiently split.
+
+### Parallel Matrix Multiplication
+
+#### Illustrated Pattern
+Recursive divide-and-conquer parallelism using `rayon::join` and optimizing for cache locality. [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[0]][42] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[1]][1] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[2]][29] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[3]][30] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[4]][31] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[5]][13] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[6]][32] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[7]][33] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[8]][14] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[9]][34] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[10]][35] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[11]][36] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[12]][37] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[13]][38] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[14]][26] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[15]][39] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[16]][28] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[17]][4] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[18]][40] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[19]][41] [demonstrated_pipelines_from_rayon_demo.2.illustrated_pattern[20]][63]
+
+#### Code Template Concept
+The core pattern is the recursive splitting of matrix operations using `rayon::join`, often abstracted into helper functions like `join4` or `join8` to spawn multiple sub-tasks. [demonstrated_pipelines_from_rayon_demo.2.code_template_concept[0]][42] A conceptual snippet is `rayon::join(|| recursive_op(sub_matrix_1), || recursive_op(sub_matrix_2));`. [demonstrated_pipelines_from_rayon_demo.2.code_template_concept[0]][42] The demo also shows zipping parallel iterators for element-wise operations: `dest.par_iter_mut().zip(src.par_iter()).for_each(|(d, s)| *d += *s);`. [demonstrated_pipelines_from_rayon_demo.2.code_template_concept[0]][42]
+
+#### When to Use
+This pattern is essential for CPU-bound, recursive algorithms like Strassen's matrix multiplication. [demonstrated_pipelines_from_rayon_demo.2.usage_context[0]][42] [demonstrated_pipelines_from_rayon_demo.2.usage_context[1]][63] `rayon::join` is highly efficient for these balanced, divide-and-conquer problems as it has very low overhead and integrates seamlessly with Rayon's work-stealing scheduler. [demonstrated_pipelines_from_rayon_demo.2.usage_context[0]][42]
+
+#### Anti-Patterns Avoided
+The implementation defines constants like `MULT_CHUNK` and `LINEAR_CHUNK` to set a threshold for subproblem size. [demonstrated_pipelines_from_rayon_demo.2.anti_patterns_avoided[0]][42] Below this threshold, the algorithm switches from parallel recursion to a sequential base case. [demonstrated_pipelines_from_rayon_demo.2.anti_patterns_avoided[0]][42] This is a critical guardrail that avoids the anti-pattern of parallelizing tiny matrix blocks, where the overhead of task creation would lead to a performance loss. [demonstrated_pipelines_from_rayon_demo.2.anti_patterns_avoided[0]][42]
+
+#### Alternate Patterns Shown
+The demo includes a `matmulz` variant that uses Z-order curve traversal. [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[0]][42] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[1]][63] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[2]][1] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[3]][29] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[4]][30] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[5]][31] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[6]][13] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[7]][32] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[8]][33] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[9]][14] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[10]][34] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[11]][35] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[12]][36] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[13]][37] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[14]][38] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[15]][26] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[16]][39] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[17]][28] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[18]][4] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[19]][40] [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[20]][41] This is an advanced pattern that goes beyond simple parallelism to optimize for cache locality. [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[0]][42] By arranging data access to follow a Z-order curve, it increases the probability that data needed for computation is already in the CPU cache, demonstrating that data layout can be as important as parallelism for performance. [demonstrated_pipelines_from_rayon_demo.2.alternate_patterns_shown[0]][42]
+
+## References
+
+1. *Rayon README and Documentation*. https://github.com/rayon-rs/rayon
+2. *Acquiring a per-thread mutex in rayon kills parallelism*. https://users.rust-lang.org/t/acquiring-a-per-thread-mutex-in-rayon-kills-parallelism/105931
+3. *Rayon Iter - reduce, fold, sum docs*. https://rust-lang.github.io/hashbrown/rayon/iter/trait.ParallelIterator.html
+4. *Per-thread storage patterns & custom reductions*. https://users.rust-lang.org/t/per-thread-storage-patterns-custom-reductions/76441
+5. *Is there an alternative to Arc<Mutex<T>> spam for ...*. https://www.reddit.com/r/rust/comments/1htxwwk/is_there_an_alternative_to_arcmutext_spam_for/
+6. *Rayon scope docs*. https://docs.rs/rayon/latest/rayon/fn.scope.html
+7. *rayon::iter::IndexedParallelIterator - Rust*. https://rust-lang.github.io/hashbrown/rayon/iter/trait.IndexedParallelIterator.html
+8. *IndexedParallelIterator in rayon::iter - Rust*. https://docs.rs/rayon/latest/rayon/iter/trait.IndexedParallelIterator.html
+9. *rayon-core/src/thread_pool/mod.rs*. https://raw.githubusercontent.com/rayon-rs/rayon/master/rayon-core/src/thread_pool/mod.rs
+10. *Docs.rs Rayon - Prelude and Iterability*. https://docs.rs/rayon/
+11. *FoldWith in rayon::iter - Rust - Docs.rs*. https://docs.rs/rayon/latest/rayon/iter/struct.FoldWith.html
+12. *TryFold in rayon::iter - Rust*. https://docs.rs/rayon/latest/rayon/iter/struct.TryFold.html
+13. *Rayon: data parallelism in Rust · baby steps - Small Cult Following*. https://smallcultfollowing.com/babysteps/blog/2015/12/18/rayon-data-parallelism-in-rust/
+14. *join in rayon - Rust*. https://docs.rs/rayon/latest/rayon/fn.join.html
+15. *Rust Rayon ThreadPool: 'Cannot borrow as mutable, as it is a ...*. https://stackoverflow.com/questions/78479584/rust-rayon-threadpool-cannot-borrow-as-mutable-as-it-is-a-captured-variable-i
+16. *Stack overflow with rayon::scope and spawn · Issue #854 - GitHub*. https://github.com/rayon-rs/rayon/issues/854
+17. *spawn in rayon - Rust*. https://docs.rs/rayon/latest/rayon/fn.spawn.html
+18. *Scope in crossbeam::thread - Rust*. https://docs.rs/crossbeam/latest/crossbeam/thread/struct.Scope.html
+19. *scope in crossbeam - Rust*. https://docs.rs/crossbeam/*/crossbeam/fn.scope.html
+20. *in_place_scope in rayon - Rust*. https://docs.rs/rayon/latest/rayon/fn.in_place_scope.html
+21. *ParallelSlice in rayon::slice - Rust*. https://docs.rs/rayon/latest/rayon/slice/trait.ParallelSlice.html
+22. *mod.rs - rayon/slice*. https://docs.rs/rayon/latest/src/rayon/slice/mod.rs.html
+23. *rayon::iter::FromParallelIterator - Rust*. https://rust-lang.github.io/hashbrown/rayon/iter/trait.FromParallelIterator.html
+24. *rayon::iter::ParallelExtend - Rust*. https://rust-lang.github.io/hashbrown/rayon/iter/trait.ParallelExtend.html
+25. *README.md - Rayon (rayon-rs/rayon)*. https://github.com/rayon-rs/rayon/blob/master/README.md
+26. *Rayon ParallelBridge trait documentation*. https://docs.rs/rayon/latest/rayon/iter/trait.ParallelBridge.html
+27. *Enumerate in rayon::iter - Rust - Docs.rs*. https://docs.rs/rayon/latest/rayon/iter/struct.Enumerate.html
+28. *Zip implementation in Rayon (zip.rs)*. https://github.com/rayon-rs/rayon/blob/master/src/iter/zip.rs
+29. *rayon/ vec.rs (Code excerpts showing IntoParallelIterator implementations)*. https://docs.rs/rayon/latest/src/rayon/vec.rs.html
+30. *ParallelIterator in rayon::iter - Rust - Docs.rs*. https://docs.rs/rayon/latest/rayon/iter/trait.ParallelIterator.html
+31. *How can I create a HashMap using Rayon's parallel fold?*. https://stackoverflow.com/questions/70096640/how-can-i-create-a-hashmap-using-rayons-parallel-fold
+32. *Rayon reduce.rs code (KDAB Codebrowser view)*. https://codebrowser.dev/slint/crates/rayon/src/iter/reduce.rs.html
+33. *Multi-threading with Rayon crate | TFHE-rs*. https://docs.zama.ai/tfhe-rs/0.6-3/guides/rayon_crate
+34. *Rayon join/mod.rs Documentation and Related Context*. https://codebrowser.dev/rust/crates/rustc-rayon-core-0.5.0/src/join/mod.rs.html
+35. *rayon 1.10.0*. https://docs.rs/crate/rayon/latest/source/src/lib.rs
+36. *src/iter/from_par_iter.rs (Rayon) - FromParallelIterator implementations and collect_extended*. https://github.com/rayon-rs/rayon/blob/main/src/iter/from_par_iter.rs
+37. *FromParallelIterator in Rayon docs*. https://docs.rs/rayon/latest/rayon/iter/trait.FromParallelIterator.html
+38. *rayon/iter/from_par_iter.rs*. https://docs.rs/rayon/latest/src/rayon/iter/from_par_iter.rs.html
+39. *Rayon par_bridge.rs (source excerpt)*. https://docs.rs/rayon/latest/src/rayon/iter/par_bridge.rs.html
+40. *GitHub - RReverser/wasm-bindgen-rayon*. https://github.com/RReverser/wasm-bindgen-rayon
+41. *rayon-demo/src/nbody/mod.rs*. https://raw.githubusercontent.com/rayon-rs/rayon/master/rayon-demo/src/nbody/mod.rs
+42. *rayon-demo/src/matmul/mod.rs*. https://raw.githubusercontent.com/rayon-rs/rayon/master/rayon-demo/src/matmul/mod.rs
+43. *Parallel stream processing with Rayon*. https://morestina.net/1432/parallel-stream-processing-with-rayon
+44. *Zip in rayon::iter - Rust*. https://docs.rs/rayon/latest/rayon/iter/struct.Zip.html
+45. *How can I change the number of threads Rayon uses? - Stack Overflow*. https://stackoverflow.com/questions/59205184/how-can-i-change-the-number-of-threads-rayon-uses
+46. *ThreadPoolBuilder - Rayon docs (docs.rs/rayon)*. https://docs.rs/rayon/latest/rayon/struct.ThreadPoolBuilder.html
+47. *ThreadPoolBuilder in rayon - Rust - Shadow*. https://shadow.github.io/docs/rust/rayon/struct.ThreadPoolBuilder.html
+48. *Rayon: Multiple Thread Pools and Scope Patterns*. https://pkolaczk.github.io/multiple-threadpools-rust/
+49. *Configuration in rayon_core_wasm - Rust*. https://docs.rs/rayon-core-wasm/latest/rayon_core_wasm/struct.Configuration.html
+50. *rayon_core_wasm - Rust - Docs.rs*. https://docs.rs/rayon-core-wasm/latest/rayon_core_wasm/
+51. *Docs.rs Rayon: max_num_threads*. https://docs.rs/rayon/latest/rayon/fn.max_num_threads.html
+52. *ThreadPool in rayon - Rust*. https://doc.servo.org/rayon/struct.ThreadPool.html
+53. *ThreadPool in rayon - Rust*. https://docs.rs/rayon/latest/rayon/struct.ThreadPool.html
+54. *rayon::ThreadPool - Rust*. https://slide-rs.github.io/specs-website/docs/docs/0.9/rayon/struct.ThreadPool.html
+55. *Clarify rust rayon nested thread pool worker numbers - Stack Overflow*. https://stackoverflow.com/questions/76919721/clarify-rust-rayon-nested-thread-pool-worker-numbers
+56. *GitHub Issue: Performance of par_bridge (#685)*. https://github.com/rayon-rs/rayon/issues/685
+57. *Make multithreaded/async app more readable in htop/gdb?*. https://users.rust-lang.org/t/make-multithreaded-async-app-more-readable-in-htop-gdb/84183
+58. *tokio :: rayon - How thread starvation killed our production server*. https://savannahar68.medium.com/how-thread-starvation-killed-our-production-server-fb5ba855aa57
+59. *Using WebAssembly threads from C, C++ and Rust*. https://web.dev/articles/webassembly-threads
+60. *wasm_bindgen_rayon - Rust*. https://docs.rs/wasm-bindgen-rayon
+61. *Rayon in WASM: Idioms and Caveats (Rust with wasm-bindgen-rayon example)*. https://rustwasm.github.io/docs/wasm-bindgen/examples/raytrace.html
+62. *Allow setting COOP and COEP headers in Github Pages #13309*. https://github.com/orgs/community/discussions/13309
+63. *Rayon-demo main.rs*. https://raw.githubusercontent.com/rayon-rs/rayon/master/rayon-demo/src/main.rs

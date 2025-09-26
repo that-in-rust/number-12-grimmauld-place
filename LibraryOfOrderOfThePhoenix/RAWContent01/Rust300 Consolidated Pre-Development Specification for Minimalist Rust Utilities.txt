@@ -1,0 +1,1628 @@
+Consolidated Pre-Development Specification for Minimalist Rust Utilities
+
+Introduction
+
+Purpose
+
+This report provides a complete and actionable pre-development
+documentation suite for a diverse collection of small-scale open-source
+software projects to be implemented in the Rust programming language.
+The objective is to furnish a comprehensive blueprint for each project,
+encompassing a detailed Product Requirement Document (PRD), a User
+Journey Map, and a set of architectural diagrams. This collection of
+documents is intended to serve as the single source of truth for any
+developer undertaking the implementation, ensuring clarity of purpose, a
+well-defined scope, and a sound architectural foundation from the
+outset.
+
+This is a living document. It will be updated incrementally until
+specifications for all identified project ideas are complete.
+
+Methodology
+
+A standardized framework is applied to each project to ensure
+consistency and rigor. This framework involves the systematic creation
+of three core artifacts:
+
+1.  Product Requirement Document (PRD): This document defines the what
+      and why of the project, outlining its objectives, target users,
+      functional and non-functional requirements, and explicit scope
+      limitations. Its structure is informed by established industry
+      best practices for creating clear and effective product
+      specifications.¹
+
+2.  User Journey Map: This visualizes the end-user's interaction with
+      the product from initial awareness to adoption and advocacy. For
+      developer-focused tools, this journey is unique, emphasizing
+      technical evaluation, integration friction, and the "aha!" moment
+      of solving a real-world problem. Each map is rendered using
+      Mermaid syntax for clarity and ease of integration into
+      documentation systems.
+
+3.  Architecture Diagrams: Three distinct diagrams—Component, Data Flow,
+      and Sequence—are provided for each project. This multi-perspective
+      approach offers a holistic view of the system's design, from its
+      static structure to its dynamic operational flow.
+
+Core Principles
+
+A critical factor distinguishing successful Rust command-line utilities
+is not mere functionality but superior ergonomics. An analysis of the
+Rust ecosystem reveals that the most celebrated tools, such as ripgrep,
+bat, and fd, have gained widespread adoption because they fundamentally
+enhance common developer workflows.⁵ These tools are not just
+replacements for their Unix counterparts (
+
+grep, cat, find); they are significant improvements that offer tangible
+benefits in performance, usability, and interface design.⁵ The praise
+for these utilities centers on their speed, intuitive syntax
+highlighting, and smarter default behaviors.
+
+The common thread is a relentless focus on Developer Experience (DX).
+Success in the crowded space of command-line tools is achieved by
+reducing friction and adding palpable value to frequent, everyday tasks.
+This principle, "The Ergonomic Advantage," serves as the guiding
+philosophy for the specifications within this report. The objective for
+each proposed utility is not merely to function correctly but to provide
+an experience that is efficient, intuitive, and ultimately, a pleasure
+to use.
+
+Project Index & Status
+
+This table provides a consolidated view of all identified project ideas
+and their current documentation status.
+
+  Project Name    Category             Status
+  --------------- -------------------- -----------
+  subst           CLI Tool             Completed
+  json-fmt        CLI Tool             Completed
+  ansi-strip      Library              Completed
+  StructNew       Procedural Macro     Completed
+  line-count      CLI Tool             Completed
+  cfg-alias       Procedural Macro     Completed
+  md-to-ansi      CLI Tool / Library   Completed
+  batch-rename    CLI Tool             Completed
+  htmlq-lite      CLI Tool             Completed
+  clock-cli       CLI Tool             Completed
+  simple-logger   Library              Pending
+  http-get        CLI Tool             Pending
+  csv-read        CLI Tool / Library   Pending
+  guessing-game   CLI Tool             Pending
+  factory-macro   Procedural Macro     Pending
+
+Part 1: subst — A Simple Find-and-Replace CLI Tool
+
+This section details the specifications for subst, a minimalist,
+sed-like utility engineered for high-performance, literal string
+substitution. Its design prioritizes simplicity and seamless integration
+into shell pipelines.
+
+1.1. Product Requirement Document (PRD)
+
+1.1.1. Objective & Purpose
+
+To provide developers with a blazingly fast, simple, and intuitive
+command-line tool for non-regular-expression, find-and-replace
+operations on streams of text. The utility is explicitly designed to be
+a more ergonomic and often faster alternative to sed for simple
+substitution tasks, directly embodying the "Ergonomic Advantage"
+principle by optimizing a common, specific workflow.⁵
+
+1.1.2. Target Audience & User Personas
+
+The primary user is a developer who is deeply integrated into the
+command-line environment and values efficiency and performance in their
+tooling.
+
+-   Primary Persona: "Alex, the Command-Line Connoisseur"
+
+    -   Role: Backend or Systems Developer.
+
+    -   Behavior: Alex spends a significant portion of the workday in a
+          terminal, building, testing, and deploying software. They are
+          proficient in shell scripting and frequently construct complex
+          data processing pipelines using tools like grep, awk, and
+          curl.
+
+    -   Needs & Goals: Alex seeks tools that are performant, reliable,
+          and have a minimal cognitive overhead. They are often
+          frustrated by the cumbersome syntax of traditional Unix tools
+          for simple tasks and are drawn to the modern, fast
+          alternatives emerging from the Rust ecosystem.⁵ They need
+          subst to integrate flawlessly into a pipeline (e.g., cat
+          log.txt | subst 'ERROR' 'WARN' > new_log.txt) without slowing
+          down their workflow.
+
+1.1.3. Functional Requirements & Acceptance Criteria
+
+For a command-line utility, the user interface is defined by its
+arguments, I/O behavior, and exit codes. To eliminate ambiguity and
+provide a clear specification for implementation and testing, these
+behaviors are best defined in a structured format. The following table
+outlines the functional requirements and their corresponding acceptance
+criteria, forming an unambiguous contract for the tool's behavior.¹
+
+  Requirement ID   Feature/Requirement Description   Acceptance Criteria
+  ---------------- --------------------------------- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  FR-SUB-01        Argument Parsing                  - MUST accept exactly two positional arguments: SEARCH_STRING and REPLACEMENT_STRING. - MUST return a non-zero exit code and a helpful error message to stderr if the argument count is not two.
+  FR-SUB-02        Stdin Handling                    - MUST read data from standard input (stdin). - MUST handle large input streams efficiently by processing line-by-line, without loading the entire stream into memory at once.
+  FR-SUB-03        Core Substitution Logic           - MUST replace the first occurrence of SEARCH_STRING with REPLACEMENT_STRING on each line. - MUST perform a case-sensitive, literal (non-regex) string comparison.
+  FR-SUB-04        Stdout Handling                   - MUST write the processed output to standard output (stdout). - MUST pass through lines that do not contain SEARCH_STRING unchanged.
+  FR-SUB-05        Error Handling                    - MUST handle I/O errors gracefully (e.g., a broken pipe when the consumer process terminates early) and exit with a non-zero status code.
+
+1.1.4. Non-Functional Requirements (NFRs)
+
+-   NFR-SUB-01 (Performance): The tool's performance must be a key
+      feature. It should be benchmarked against the equivalent sed -e
+      's/SEARCH/REPLACE/' command and demonstrate comparable or superior
+      throughput, particularly on large input files. This aligns with
+      the high-performance characteristic expected of Rust CLI tools.⁵
+
+-   NFR-SUB-02 (Portability): The tool must compile and run correctly on
+      major operating systems: Linux, macOS, and Windows.
+
+-   NFR-SUB-03 (Code Size): The entire implementation must be
+      constrained to under 300 lines of code (LOC), adhering to the
+      project's core constraint.
+
+1.1.5. Out of Scope
+
+To maintain simplicity and focus, the following features are explicitly
+excluded from this version:
+
+-   Regular expression (regex) support.
+
+-   In-place file editing (e.g., a -i flag).
+
+-   Global replacement (replacing all occurrences on a line).
+
+-   Any command-line flags or options (e.g., for case-insensitivity).
+
+1.2. User Journey Map
+
+The journey of a developer adopting a new CLI tool is a funnel of
+increasing commitment, moving from initial problem awareness to eventual
+advocacy. This map visualizes that process for subst, highlighting
+critical stages and potential friction points. The "Aha!" moment is the
+point where the tool's value becomes immediately apparent, solidifying
+the user's decision to adopt it.
+
+  Code snippet
+
+flowchart TD
+subgraph "Awareness"
+A[Problem: "I need to do a simple find-and-replace in a script. `sed`
+syntax is annoying for this."] --> B{Search: "rust simple sed
+alternative", "fast string replace cli"}
+end
+subgraph "Evaluation"
+B --> C
+C --> D{Onboarding: Reads README, sees simple usage: `cat file | subst
+old new`}
+D --> E[Action: `cargo install subst` and tries it on a test file]
+E --> F{"Aha!" Moment: "Wow, that was simple and fast."}
+end
+subgraph "Adoption & Retention"
+F --> G[Integration: Uses `subst` in a personal shell script]
+G --> H
+end
+subgraph "Advocacy"
+H --> I
+end
+style F fill:#d4edda,stroke:#155724
+
+1.3. Architecture Diagrams
+
+The following diagrams provide three distinct views of the subst
+architecture, illustrating its components, data flow, and operational
+sequence.
+
+1.3.1. Component Architecture
+
+This diagram shows the high-level static components of the application
+and their relationships. It defines the primary modules or logical units
+of the binary.
+
+  Code snippet
+
+graph TD
+subgraph "subst Binary"
+A[CLI Argument Parser] -- "Config (Search/Replace Strings)" --> B(Core
+Logic)
+C -- "Input Lines" --> B
+B -- "Output Lines" --> D
+B -- "Errors" --> E
+end
+
+1.3.2. Data Flow Diagram
+
+This diagram traces the path of data as it moves through the system,
+from initial user input to final output. It emphasizes the
+transformation of data at each stage.
+
+  Code snippet
+
+graph TD
+A(User Input via Shell) --> B[stdin stream]
+B --> C{Reads one line into buffer}
+C --> D{Performs substitution on buffer}
+D --> E[stdout stream]
+E --> F(Terminal/Next Command)
+
+1.3.3. Operational Sequence Diagram
+
+This diagram illustrates the time-ordered sequence of interactions
+between the user, the operating system, and the subst process during a
+typical execution.
+
+  Code snippet
+
+sequenceDiagram
+participant User
+participant OS
+participant subst
+User->>OS: `cat data.txt | subst 'foo' 'bar'`
+OS->>subst: Spawns process with args and piped stdin
+subst->>subst: Parse args ('foo', 'bar')
+loop For each line from stdin
+OS->>subst: Provides line
+subst->>subst: Apply substitution logic
+subst->>OS: Write processed line to stdout
+end
+subst->>OS: Exits with code 0
+
+Part 2: json-fmt — A JSON Pretty-Printer and Validator
+
+This section provides the specifications for json-fmt, a utility
+designed to read a JSON string, validate its structural integrity, and
+output a human-readable, pretty-printed version.
+
+2.1. Product Requirement Document (PRD)
+
+2.1.1. Objective & Purpose
+
+To provide developers with a fast, lightweight, and reliable
+command-line tool for validating and formatting JSON data. This tool is
+essential for workflows involving API development and data inspection,
+serving as a minimal, single-purpose alternative to more complex tools
+like jq when only formatting is required.¹⁰
+
+2.1.2. Target Audience & User Personas
+
+The primary user is any developer who regularly interacts with JSON data
+in a terminal environment.
+
+-   Primary Persona: "Priya, the API Developer"
+
+    -   Role: Full-Stack or Backend Developer.
+
+    -   Behavior: Priya frequently uses curl to test API endpoints,
+          which often return minified, single-line JSON responses. She
+          needs a quick and dependable way to make this output readable
+          for debugging and verification directly in her terminal.
+
+    -   Needs & Goals: Priya's workflow is heavily reliant on shell
+          pipelines (e.g., curl... | tool). She needs json-fmt to be a
+          "good citizen" in this environment: it must be fast, handle
+          stdin correctly, and provide clear error feedback when the
+          input is not valid JSON.⁷
+
+2.1.3. Functional Requirements & Acceptance Criteria
+
+The tool's contract is defined by its ability to parse JSON correctly
+and provide predictable output for both valid and invalid inputs.
+
+  Requirement ID   Feature/Requirement Description   Acceptance Criteria
+  ---------------- --------------------------------- ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  FR-JSN-01        Input Handling                    - MUST read a single, continuous stream of data from stdin. The tool should expect to read the entire JSON object from its input before processing.
+  FR-JSN-02        JSON Parsing & Validation         - MUST parse the input stream using a robust JSON library (e.g., serde_json). - If parsing succeeds, the tool MUST proceed to the formatting stage. - If parsing fails, the tool MUST exit with a non-zero status code and print a descriptive error (e.g., "Invalid JSON at line X, col Y") to stderr.
+  FR-JSN-03        JSON Formatting                   - MUST output a pretty-printed version of the valid JSON to stdout. - The default indentation for the formatted output MUST be 2 spaces.
+  FR-JSN-04        Error Handling                    - MUST handle I/O errors gracefully (e.g., failure to read from stdin).
+
+2.1.4. Non-Functional Requirements (NFRs)
+
+-   NFR-JSN-01 (Performance): The tool must be benchmarked against jq
+      '.' and demonstrate significantly faster performance for the task
+      of parsing and pretty-printing.
+
+-   NFR-JSN-02 (Dependencies): The implementation should rely on a
+      well-vetted, community-trusted JSON library such as serde_json to
+      ensure correctness and security.
+
+-   NFR-JSN-03 (Code Size): The implementation must be under 300 LOC.
+
+2.1.5. Out of Scope
+
+-   JSON querying, filtering, or data extraction (this is the domain of
+      jq).
+
+-   In-place editing of files.
+
+-   Configurable options such as indentation width or output
+      colorization.
+
+2.2. User Journey Map
+
+This journey focuses on the immediate feedback loop a developer
+experiences when working with APIs. The tool's value is in its ability
+to instantly transform unreadable data into a structured, understandable
+format.
+
+  Code snippet
+
+flowchart TD
+subgraph "Awareness & Evaluation"
+A --> B{Search: "cli json pretty print rust"}
+B --> C
+C --> D[Action: `curl... | json-fmt`]
+end
+subgraph "Adoption"
+D --> E{"Aha!" Moment: The unreadable blob is instantly formatted
+correctly.}
+E --> F{Validation Test: Tries it on an invalid JSON file.}
+F --> G
+G --> H[Habit: Aliases `json-fmt` to `jf` in shell profile for quick
+access.]
+end
+style E fill:#d4edda,stroke:#155724
+style G fill:#d4edda,stroke:#155724
+
+2.3. Architecture Diagrams
+
+The architecture revolves around a deserialize-then-serialize pattern,
+with distinct paths for success and failure.
+
+2.3.1. Component Architecture
+
+This diagram shows the logical separation of concerns within the binary,
+highlighting the roles of I/O, deserialization, serialization, and error
+handling.
+
+  Code snippet
+
+graph TD
+subgraph "json-fmt Binary"
+A[I/O Handler] -- "Raw String" --> B(JSON Deserializer via `serde_json`)
+B -- "Valid JSON Value" --> C(JSON Serializer via `serde_json`)
+B -- "Parse Error" --> D[Error Formatter]
+C -- "Formatted String" --> A
+D -- "Error Message" --> A
+end
+A -- "Input/Output" --> E((Terminal))
+
+2.3.2. Data Flow Diagram
+
+This diagram shows the transformation of data from a raw byte stream
+into structured Rust types and back into a formatted string.
+
+  Code snippet
+
+graph TD
+A(curl response) --> B[stdin]
+B --> C{Read entire stdin into a String}
+C --> D{`serde_json::from_str`}
+D -- "Ok(Value)" --> E{`serde_json::to_string_pretty`}
+D -- "Err(e)" --> F{Format error message}
+E --> G[stdout]
+F --> H[stderr]
+
+2.3.3. Operational Sequence Diagram
+
+This sequence diagram details the conditional logic based on the
+validity of the JSON input, showing the interaction with the serde_json
+library.
+
+  Code snippet
+
+sequenceDiagram
+participant User
+participant json_fmt
+participant serde_json
+User->>json_fmt: Pipes JSON string to stdin
+json_fmt->>json_fmt: Reads all of stdin into a buffer
+json_fmt->>serde_json: `from_str(&buffer)`
+alt Input is Valid JSON
+serde_json-->>json_fmt: Returns `Ok(Value)`
+json_fmt->>serde_json: `to_string_pretty(&Value)`
+serde_json-->>json_fmt: Returns `Ok(String)`
+json_fmt->>User: Writes formatted string to stdout
+else Input is Invalid JSON
+serde_json-->>json_fmt: Returns `Err(error)`
+json_fmt->>User: Writes error message to stderr
+end
+
+Part 3: ansi-strip — An ANSI Escape Sequence Stripping Library
+
+This section details ansi-strip, a library crate (not a binary) that
+provides a single, efficient function to remove ANSI escape codes from
+strings. The idea for such a utility is drawn from community wishlists
+for small, focused Rust tools.¹¹
+
+3.1. Product Requirement Document (PRD)
+
+3.1.1. Objective & Purpose
+
+To provide Rust developers with a simple, zero-dependency, and
+high-performance utility function for cleaning ANSI escape codes from
+strings. This functionality is critical when logging raw output from
+command-line tools to files, or when displaying such output in
+environments that do not correctly render ANSI color and formatting
+codes.
+
+3.1.2. Target Audience & User Personas
+
+The user of a library crate is another developer integrating it into a
+larger project.
+
+-   Primary Persona: "Sam, the Library Author"
+
+    -   Role: Rust Developer, Open-Source Contributor.
+
+    -   Behavior: Sam is building a larger Rust application, such as a
+          test runner, a continuous integration tool, or a logging
+          framework. Their application needs to capture and process the
+          stdout and stderr streams from other command-line programs.
+
+    -   Needs & Goals: Sam needs a reliable and performant way to
+          sanitize this captured output before writing it to a log file
+          or displaying it in a plain text UI. They prioritize crates
+          that are lightweight (zero-dependency is ideal),
+          well-documented, and have a stable API to avoid future
+          maintenance burdens.
+
+3.1.3. Functional Requirements & Acceptance Criteria
+
+The PRD for a library must focus on the public API contract: the
+function signatures, their documented behavior, and their performance
+characteristics. This is the "user interface" for the developer
+consuming the crate.
+
+  Requirement ID   Feature/Requirement Description   Acceptance Criteria
+  ---------------- --------------------------------- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  FR-ANS-01        Public API                        - MUST expose a single public function, for example: pub fn strip(input: &str) -> String. - The function MUST be thoroughly documented with clear examples in the lib.rs file, making it discoverable and understandable on docs.rs.
+  FR-ANS-02        Core Logic                        - MUST correctly identify and remove standard ANSI/VT100 escape sequences, specifically Control Sequence Introducer (CSI) sequences of the form `\x1b
+
+  Code snippet
+
+flowchart TD
+subgraph "Discovery & Evaluation"
+A[Problem: "My app captures CLI output, but the logs are full of garbage
+like `[31m`."] --> B{Search: "rust remove ansi escape codes crate"}
+B --> C
+C --> D{Evaluation: Checks docs.rs for API, sees it's one simple
+function. Checks for dependencies (sees zero). Looks at download
+numbers.}
+end
+subgraph "Integration & Adoption"
+D --> E[Action: `cargo add ansi-strip`]
+E --> F[Implementation: `let clean_output =
+ansi_strip::strip(&raw_output);`]
+F --> G{"Aha!" Moment: "It just works." The code is clean and the
+problem is solved.}
+G --> H
+end
+style G fill:#d4edda,stroke:#155724
+
+3.3. Architecture Diagrams
+
+For a simple library, the architecture focuses on the module structure,
+the internal algorithm, and the external API contract.
+
+3.3.1. Library Module Structure
+
+This diagram shows the separation between the public-facing API and the
+internal implementation details, a key aspect of good library design.
+
+  Code snippet
+
+graph TD
+subgraph "ansi-strip crate"
+A(Public Module `lib.rs`) -- "Exposes" --> B[pub fn strip(input: &str)]
+B -- "Calls" --> C(Internal state-machine logic)
+D(Test Module `tests.rs`) -- "Tests" --> B
+end
+
+3.3.2. State Machine Logic
+
+The core of the library is a simple state machine for parsing the input
+string. This is the most efficient architectural pattern for this task.
+
+  Code snippet
+
+graph TD
+A(Start) --> B{Read char};
+B -- "Not ESC (`\x1b`)" --> C[Append char to output];
+C --> B;
+B -- "ESC (`\x1b`)" --> D{Enter 'Escape' State};
+D --> E{Read next char};
+E -- "'
+### 4.1. Product Requirement Document (PRD)
+#### 4.1.1. Objective & Purpose
+To reduce repetitive boilerplate code for Rust developers by
+automatically generating a standard `::new()` constructor function for
+any struct to which the macro is applied. This enhances developer
+productivity and maintains code cleanliness by abstracting away a
+common, mechanical task.
+#### 4.1.2. Target Audience & User Personas
+The user is any Rust developer who frequently defines new data
+structures.
+* **Primary Persona: "David, the DRY Developer"**
+* **Role:** Rust Software Engineer.
+* **Behavior:** David adheres to the "Don't Repeat Yourself" (DRY)
+principle. He writes a lot of Rust code and finds the manual creation of
+`pub fn new(...) -> Self { Self {... } }` for every new struct to be
+tedious and error-prone, especially for structs with many fields.
+* **Needs & Goals:** David values tools and language features that
+automate repetitive tasks. He wants to use `StructNew` to simply declare
+his intent (`#`) and let the compiler handle the mechanical
+implementation, allowing him to focus on more complex business logic.
+#### 4.1.3. Functional Requirements & Acceptance Criteria
+The "user interface" of a procedural macro is the syntax it enables and,
+crucially, the quality of the compiler errors it produces when misused.
+The PRD must therefore focus on this compile-time interaction.
+| Requirement ID | Feature/Requirement Description | Acceptance Criteria
+|
+| :--- | :--- | :--- |
+| FR-MAC-01 | Derive Macro Implementation | - MUST be implemented as a
+procedural derive macro, invoked with `#`.<br>- MUST be packaged in a
+dedicated crate with the `proc-macro = true` setting in its
+`Cargo.toml`. |
+| FR-MAC-02 | Code Generation | - MUST generate a public function named
+`new`.<br>- The `new` function's arguments MUST match the struct's
+fields in both name and type, and appear in the order they are defined
+in the struct.<br>- The `new` function MUST have a return type of
+`Self`. |
+| FR-MAC-03 | Compatibility | - MUST work correctly on structs defined
+with named fields.<br>- MUST correctly handle generic type parameters
+and lifetime parameters present on the struct definition.<br>- MUST
+handle a wide variety of field types, including primitives, standard
+library types (e.g., `String`, `Vec<T>`), and other user-defined types.
+|
+| FR-MAC-04 | Error Handling | - MUST produce a clear and helpful
+compile-time error via `compile_error!` if the `#` attribute is applied
+to an `enum`, `union`, or a tuple struct. |
+#### 4.1.4. Non-Functional Requirements (NFRs)
+* **NFR-MAC-01 (Dependencies):** The implementation will require the
+`syn` and `quote` crates as dependencies. This is standard and accepted
+practice for writing robust procedural macros in Rust.
+* **NFR-MAC-02 (Compile-Time Performance):** The macro expansion process
+should be efficient and not introduce a noticeable slowdown to the
+overall compilation time for typical projects.
+#### 4.1.5. Out of Scope
+* Generation of a `::default()` implementation. The `#` macro already
+serves this purpose.
+* Support for attributes to modify behavior (e.g., an attribute to skip
+a field or provide a default value), as seen in more complex
+builder-pattern macros.
+* Support for `union` types.
+### 4.2. User Journey Map
+The user journey for a procedural macro is unique as it occurs entirely
+within the developer's code editor and during the compilation process.
+The key moments are the ease of use and the clarity of feedback from the
+compiler.
+```mermaid
+flowchart TD
+subgraph "Authoring Time"
+A[Problem: "I need a constructor for this new struct."] --> B` above the
+struct definition]
+B --> C{"Aha!" Moment: Realizes they don't have to write the `impl`
+block manually.}
+end
+subgraph "Compile Time"
+C --> D{Compiler runs the `StructNew` proc-macro}
+D -- "Success" --> E[Code compiles, `::new()` method is available.]
+D -- "Failure (e.g., on an enum)" --> F
+end
+subgraph "Usage"
+E --> G
+end
+style C fill:#d4edda,stroke:#155724
+
+4.3. Architecture Diagrams
+
+The architecture of a procedural macro is centered on the transformation
+of Rust code at compile time.
+
+4.3.1. Macro Crate Architecture
+
+This diagram illustrates the relationship between the compiler, the
+macro crate, and its essential dependencies, syn and quote.
+
+  Code snippet
+
+graph TD
+A[Compiler (`rustc`)] -- "Input TokenStream" --> B(struct_new_macro)
+subgraph "struct-new (proc-macro crate)"
+B -- "Uses for Parsing" --> C[syn crate]
+C -- "Produces AST" --> D{Macro Logic}
+D -- "Uses for Code Gen" --> E[quote crate]
+E -- "Produces Output TokenStream" --> D
+end
+B -- "Generated Code" --> A
+
+4.3.2. Code Generation Flow
+
+This diagram shows the logical flow of transforming the input struct
+definition into the output impl block.
+
+  Code snippet
+
+graph TD
+A[Input: `struct Point { x: i32, y: i32 }`] --> B{Parse with
+`syn::parse`}
+B --> C
+B --> D[Extract: Fields (`x: i32`, `y: i32`)]
+C & D --> E{Construct function signature and body with `quote!`}
+E --> F[Output: `impl Point { pub fn new(...) }`]
+
+4.3.3. Macro Expansion Sequence
+
+This sequence diagram details the step-by-step interaction between the
+compiler and the macro during the build process.
+
+  Code snippet
+
+sequenceDiagram
+participant Developer
+participant rustc as Compiler
+participant StructNewMacro as Macro
+Developer->>rustc: `cargo build`
+rustc->>rustc: Encounters `#` on `struct Point`
+rustc->>StructNewMacro: Invokes macro with `Point`'s TokenStream
+activate StructNewMacro
+StructNewMacro->>StructNewMacro: Parse tokens into an Abstract Syntax
+Tree (AST) using `syn`
+StructNewMacro->>StructNewMacro: Generate new tokens for the `impl`
+block and `new` function using `quote`
+StructNewMacro-->>rustc: Returns generated TokenStream
+deactivate StructNewMacro
+rustc->>rustc: Splices the returned tokens into the code for compilation
+rustc-->>Developer: Build successful
+
+Part 5: line-count — A Source Code Line Counter
+
+This section details line-count, a simple utility inspired by more
+comprehensive tools like tokei.⁵ It is designed to analyze a single
+source file and report a breakdown of its lines.
+
+5.1. Product Requirement Document (PRD)
+
+5.1.1. Objective & Purpose
+
+To provide a simple, fast command-line tool that analyzes a single file
+and provides a count of total lines, code lines, blank lines, and
+comment lines. It serves as both a useful learning project for Rust
+beginners and a lightweight utility for developers wanting a quick
+high-level analysis of a file's composition.¹⁰
+
+5.1.2. Target Audience & User Personas
+
+The target user is a developer who needs a quick, informal measure of a
+file's structure.
+
+-   Primary Persona: "Leo, the Learner"
+
+    -   Role: Junior Developer or a developer new to a specific
+          codebase.
+
+    -   Behavior: Leo is exploring an unfamiliar project and wants to
+          get a quick sense of individual files. Before diving deep into
+          the logic, they want to answer high-level questions like: "Is
+          this file heavily commented? Is it dense with code, or does it
+          have a lot of whitespace?"
+
+    -   Needs & Goals: Leo needs a tool that is trivial to install and
+          run. The output must be simple, clear, and immediate,
+          providing a useful heuristic about the file's nature without
+          the complexity of a full static analysis tool.
+
+5.1.3. Functional Requirements & Acceptance Criteria
+
+The requirements focus on correct file handling and a clear, simple set
+of rules for line classification.
+
+  Requirement ID   Feature/Requirement Description   Acceptance Criteria
+  ---------------- --------------------------------- -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  FR-LNC-01        Argument Parsing                  - MUST accept exactly one positional argument: FILE_PATH. - MUST return a non-zero exit code and a user-friendly error message to stderr if the specified file does not exist or cannot be read due to permissions.
+  FR-LNC-02        File Reading                      - MUST read the specified file efficiently on a line-by-line basis to handle large files without high memory consumption.
+  FR-LNC-03        Line Classification               - A line containing only whitespace characters (spaces, tabs) is classified as a "Blank Line". - A line whose first non-whitespace characters are // or /* is classified as a "Comment Line". - Any other non-blank line is classified as a "Code Line". - "Total Lines" is the sum of all physical lines read from the file.
+  FR-LNC-04        Output Formatting                 - MUST print a human-readable summary to stdout. - The output MUST include distinct labels and their corresponding counts for Total Lines, Code Lines, Blank Lines, and Comment Lines.
+
+5.1.4. Non-Functional Requirements (NFRs)
+
+-   NFR-LNC-01 (Performance): The tool should process files quickly by
+      streaming the content rather than loading the entire file into
+      memory.
+
+-   NFR-LNC-02 (Simplicity): The classification logic must remain simple
+      and heuristic-based. It should not attempt to be a full language
+      parser.
+
+-   NFR-LNC-03 (Code Size): The implementation must be under 300 LOC.
+
+5.1.5. Out of Scope
+
+-   Recursive analysis of directories or multiple files.
+
+-   Language-specific comment syntax beyond // and /* (e.g., # for
+      Python, -- for SQL).
+
+-   Distinguishing between documentation comments (e.g., ///) and
+      regular comments.
+
+-   Machine-readable output formats like JSON or CSV.
+
+5.2. User Journey Map
+
+The journey for this tool is short and transactional, focused on
+answering a single, immediate question for the user.
+
+  Code snippet
+
+flowchart TD
+subgraph "Discovery & Use"
+A[Problem: "I wonder how complex this `main.rs` file really is."] -->
+B[Action: `cargo install line-count`]
+B --> C[Execution: `line-count src/main.rs`]
+C --> D
+end
+subgraph "Insight"
+D --> E{"Aha!" Moment: "Okay, it's mostly code, not too many comments. I
+can get a quick feel for a file's density with this."}
+end
+style E fill:#d4edda,stroke:#155724
+
+5.3. Architecture Diagrams
+
+The architecture is a straightforward file processing pipeline that
+maintains a simple state (the counters).
+
+5.3.1. Component Architecture
+
+This diagram shows the main logical components and how they collaborate
+to produce the final report.
+
+  Code snippet
+
+graph TD
+subgraph "line-count Binary"
+A[Arg Parser] -- "File Path" --> B
+B -- "Line by Line" --> C[Line Classifier]
+C -- "Updates" --> D(Counter State)
+A -- "Triggers on Completion" --> E
+E -- "Reads from" --> D
+E -- "Prints to" --> F((stdout))
+end
+
+5.3.2. Data Flow Diagram
+
+This diagram traces the flow from the file on disk, through the
+classification logic, to the final aggregated counts.
+
+  Code snippet
+
+graph TD
+A --> B{Open file stream}
+B --> C{Read one line}
+subgraph "Loop until EOF"
+C --> D{Classify line (Code, Comment, Blank)}
+D --> E{Increment appropriate counter}
+E --> C
+end
+C -- No more lines --> F{Format and print final counts}
+
+5.3.3. Operational Sequence Diagram
+
+This diagram provides a step-by-step trace of the program's execution
+for a single run.
+
+  Code snippet
+
+sequenceDiagram
+participant User
+participant line_count
+User->>line_count: Executes with file path `src/main.rs`
+activate line_count
+line_count->>line_count: Parses argument, gets file path
+line_count->>line_count: Opens file for reading
+line_count->>line_count: Initializes counters (total, code, etc.) to
+zero
+loop For each line in file
+line_count->>line_count: Reads line
+line_count->>line_count: Trims whitespace from the line
+alt Line is empty after trim
+line_count->>line_count: Increment blank_counter
+else Line starts with '//' or '/*' after trim
+line_count->>line_count: Increment comment_counter
+else
+line_count->>line_count: Increment code_counter
+end
+line_count->>line_count: Increment total_counter
+end
+line_count->>line_count: Formats results into a summary string
+line_count->>User: Prints summary to stdout
+deactivate line_count
+
+Part 6: cfg-alias — A Macro for cfg Aliases
+
+This section details cfg-alias, a procedural attribute macro to create
+readable aliases for complex #[cfg(...)] attributes, an idea directly
+from community wishlists.¹¹
+
+6.1. Product Requirement Document (PRD)
+
+6.1.1. Objective & Purpose
+
+To improve the readability and maintainability of Rust code that uses
+complex conditional compilation flags. This macro allows developers to
+define a short, descriptive alias for a long #[cfg(...)] expression and
+reuse it, reducing repetition and the chance of error.
+
+6.1.2. Target Audience & User Personas
+
+The primary user is a developer working on a large or highly
+configurable Rust project.
+
+-   Primary Persona: "Maria, the Systems Programmer"
+
+    -   Role: Embedded or Systems-level Rust Developer.
+
+    -   Behavior: Maria works on a codebase that needs to compile for
+          multiple targets (e.g., different architectures, with/without
+          std, with various feature flags). Her code is littered with
+          attributes like #[cfg(all(target_arch = "arm", not(feature =
+          "std")))].
+
+    -   Needs & Goals: Maria needs to simplify these declarations to
+          make the code cleaner and less error-prone. She wants to
+          define an alias like #[arm_no_std] once and use it everywhere,
+          making the conditions self-documenting.
+
+6.1.3. Functional Requirements & Acceptance Criteria
+
+  Requirement ID   Feature/Requirement Description   Acceptance Criteria
+  ---------------- --------------------------------- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  FR-CFG-01        Alias Definition                  - MUST provide a function-like macro, e.g., define_cfg_alias!, to define the alias. - The definition macro MUST accept two arguments: the alias name (an identifier) and the cfg expression (as a token tree). Example: define_cfg_alias!(arm_no_std, all(target_arch = "arm", not(feature = "std")));
+  FR-CFG-02        Alias Usage                       - MUST provide an attribute macro, e.g., #[use_cfg_alias], that can be applied to items (functions, structs, etc.). - The usage macro MUST accept the alias name as an argument: #[use_cfg_alias(arm_no_std)].
+  FR-CFG-03        Code Generation                   - The #[use_cfg_alias(alias_name)] macro MUST expand to the full #[cfg(...)] attribute that was defined for alias_name.
+  FR-CFG-04        Error Handling                    - MUST produce a clear compile-time error if use_cfg_alias is called with an undefined alias name. - MUST produce a clear compile-time error if define_cfg_alias! is malformed.
+
+6.1.4. Non-Functional Requirements (NFRs)
+
+-   NFR-CFG-01 (Dependencies): Requires syn and quote.
+
+-   NFR-CFG-02 (Ergonomics): The syntax for defining and using aliases
+      must be simple and intuitive.
+
+-   NFR-CFG-03 (Code Size): The implementation must be under 300 LOC.
+
+6.1.5. Out of Scope
+
+-   Dynamic or runtime evaluation of aliases. This is strictly a
+      compile-time mechanism.
+
+-   Scoping of aliases (all defined aliases are global to the crate).
+
+6.2. User Journey Map
+
+  Code snippet
+
+flowchart TD
+subgraph "Problem & Discovery"
+A[Problem: "My code is unreadable with all these long `#[cfg]`
+attributes."] --> B{Search: "rust cfg alias macro"}
+B --> C
+end
+subgraph "Adoption & Usage"
+C --> D
+D --> E`]
+E --> F{"Aha!" Moment: "The code is so much cleaner and the intent is
+obvious."}
+end
+style F fill:#d4edda,stroke:#155724
+
+6.3. Architecture Diagrams
+
+The architecture involves two macros that communicate via a shared,
+compile-time mechanism (likely a static map or similar construct, though
+this is complex; a simpler approach might involve a single macro). A
+simpler, more robust design would be a single attribute macro that takes
+the full definition. Let's design for the more ergonomic two-macro
+approach first. Correction: A two-macro approach where one macro defines
+data for another is not directly possible as they run in separate
+contexts. A more viable approach is a single attribute macro that takes
+the alias definition and applies it. Let's pivot the design to a single,
+more powerful attribute macro.
+
+Revised Architecture: A single attribute macro #[cfg_alias(name,
+cfg_expression)] that replaces itself with the #[cfg(cfg_expression)].
+This is less ergonomic than the user might want, but is technically
+sound. The original idea is better, but harder. Let's stick to the
+original, more ambitious idea and note the implementation challenge. The
+macros would need to write to a file at compile time, which is fragile.
+
+Final Architectural Decision: A single macro is more robust.
+#[cfg_alias(arm_no_std, all(target_arch = "arm", not(feature = "std")))]
+is not ideal. Let's specify a macro that contains the item.
+
+  Rust
+
+// Desired usage
+cfg_alias! {
+alias arm_no_std = all(target_arch = "arm", not(feature = "std"));
+#[cfg(arm_no_std)]
+fn my_func() {... }
+}
+
+This is a function-like macro that rewrites its contents. This is the
+most robust design.
+
+6.3.1. Component Architecture
+
+  Code snippet
+
+graph TD
+subgraph "cfg-alias Macro"
+A --> B{Parser (`syn`)}
+B --> C
+B --> D
+C & D --> E{Rewriter Logic (`quote`)}
+E --> F
+end
+
+6.3.2. Data Flow Diagram
+
+  Code snippet
+
+graph TD
+A --> B{Compiler Invokes Macro}
+B --> C{Parse alias definitions and code items}
+C --> D{Create a mapping of alias names to `cfg` expressions}
+D --> E{Iterate through items, find `#[cfg(alias)]` attributes}
+E --> F{Replace `#[cfg(alias)]` with `#[cfg(full_expression)]`}
+F --> G{Generate final token stream}
+G --> B
+
+6.3.3. Operational Sequence Diagram
+
+  Code snippet
+
+sequenceDiagram
+participant Developer
+participant rustc as Compiler
+participant CfgAliasMacro as Macro
+Developer->>rustc: `cargo build`
+rustc->>CfgAliasMacro: Invokes `cfg_alias!` with its content as
+TokenStream
+activate CfgAliasMacro
+CfgAliasMacro->>CfgAliasMacro: Parse content to find alias rules and
+items
+CfgAliasMacro->>CfgAliasMacro: For each item, check its `#[cfg]`
+attributes
+CfgAliasMacro->>CfgAliasMacro: If an attribute is an alias, substitute
+it with the full expression
+CfgAliasMacro->>CfgAliasMacro: Generate new TokenStream for the modified
+items
+CfgAliasMacro-->>rustc: Return the rewritten code block
+deactivate CfgAliasMacro
+rustc->>rustc: Compile the expanded code
+
+Part 7: md-to-ansi — Markdown to ANSI Terminal Renderer
+
+This section details md-to-ansi, a utility to convert basic Markdown
+into text with ANSI escape codes for rich display in a terminal,
+inspired by tools like mdcat.¹¹
+
+7.1. Product Requirement Document (PRD)
+
+7.1.1. Objective & Purpose
+
+To provide developers with a simple tool to render Markdown files
+directly in the terminal with basic styling (bold, italics, code
+blocks), improving the experience of reading documentation like
+README.md files without leaving the command line.
+
+7.1.2. Target Audience & User Personas
+
+-   Primary Persona: "Chloe, the CLI Documentarian"
+
+    -   Role: Software Developer.
+
+    -   Behavior: Chloe frequently reads documentation for tools and
+          libraries, which is almost always in Markdown. She prefers to
+          stay in her terminal and finds opening a browser or separate
+          preview app to be disruptive.
+
+    -   Needs & Goals: Chloe needs a fast utility that can take a
+          Markdown file as input and output a readable, styled version
+          to her terminal. The styling should be simple and not clutter
+          the text.
+
+7.1.3. Functional Requirements & Acceptance Criteria
+
+  Requirement ID   Feature/Requirement Description   Acceptance Criteria
+  ---------------- --------------------------------- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  FR-MDA-01        Input Handling                    - MUST accept a file path as a command-line argument. - MUST also support reading from stdin to be used in pipelines.
+  FR-MDA-02        Markdown Parsing                  - MUST parse a limited subset of Markdown features. - Supported features: Headers (#), Bold (**text** or __text__), Italic (*text* or _text_), Inline Code (`code`), and Code Blocks (```).
+  FR-MDA-03        ANSI Rendering                    - Headers MUST be rendered in a distinct color (e.g., blue) and bold. - Bold text MUST be rendered using the ANSI bold sequence. - Italic text MUST be rendered using ANSI italic/dim sequence (or a different color if italics are not well-supported). - Inline code and code blocks MUST be rendered with a different background color to distinguish them.
+  FR-MDA-04        Output Handling                   - MUST write the ANSI-formatted text to stdout.
+
+7.1.4. Non-Functional Requirements (NFRs)
+
+-   NFR-MDA-01 (Dependencies): Should use a lightweight Markdown parsing
+      crate (e.g., pulldown-cmark).
+
+-   NFR-MDA-02 (Performance): Must be fast enough for instantaneous
+      rendering of medium-sized Markdown files.
+
+-   NFR-MDA-03 (Code Size): The implementation must be under 300 LOC.
+
+7.1.5. Out of Scope
+
+-   Complex Markdown features like tables, links, images, or nested
+      lists.
+
+-   Theming or custom color configuration.
+
+7.2. User Journey Map
+
+  Code snippet
+
+flowchart TD
+subgraph "Awareness & Trial"
+A --> B{Search: "rust markdown terminal renderer"}
+B --> C[Action: `cargo install md-to-ansi`]
+C --> D
+end
+subgraph "Adoption"
+D --> E{"Aha!" Moment: The Markdown file is instantly rendered with
+readable colors and styles.}
+E --> F[Habit: Uses the tool as a replacement for `cat` when viewing
+`.md` files.]
+end
+style E fill:#d4edda,stroke:#155724
+
+7.3. Architecture Diagrams
+
+7.3.1. Component Architecture
+
+  Code snippet
+
+graph TD
+subgraph "md-to-ansi Binary"
+A -- "Markdown String" --> B(Markdown Parser)
+B -- "Token Stream" --> C(ANSI Renderer)
+C -- "ANSI-formatted String" --> D
+end
+
+7.3.2. Data Flow Diagram
+
+  Code snippet
+
+graph TD
+A[Markdown File] --> B{Read file into String}
+B --> C{Parse String with `pulldown-cmark`}
+C --> D{Iterate over Markdown events/tokens}
+subgraph "For each token"
+D --> E{Match token type (e.g., Start(Tag::Bold))}
+E --> F{Generate corresponding ANSI sequence}
+end
+F --> G[Concatenate into final output string]
+G --> H
+
+7.3.3. Operational Sequence Diagram
+
+  Code snippet
+
+sequenceDiagram
+participant User
+participant md_to_ansi
+participant pulldown_cmark
+User->>md_to_ansi: `md-to-ansi file.md`
+activate md_to_ansi
+md_to_ansi->>md_to_ansi: Read `file.md` content
+md_to_ansi->>pulldown_cmark: `Parser::new(&content)`
+activate pulldown_cmark
+pulldown_cmark-->>md_to_ansi: Returns an iterator of tokens
+deactivate pulldown_cmark
+loop For each token
+md_to_ansi->>md_to_ansi: Match token and print corresponding ANSI text
+end
+deactivate md_to_ansi
+
+Part 8: batch-rename — A CLI for Batch Renaming
+
+This section details batch-rename, a command-line tool for renaming
+multiple files at once based on a find-and-replace pattern, inspired by
+existing tools like rnr.⁵
+
+8.1. Product Requirement Document (PRD)
+
+8.1.1. Objective & Purpose
+
+To provide a safe and intuitive command-line utility for performing
+simple batch renaming operations on files within a directory. The tool
+prioritizes a clear "dry run" mode to prevent accidental data loss.
+
+8.1.2. Target Audience & User Personas
+
+-   Primary Persona: "Dana, the Data Organizer"
+
+    -   Role: Photographer, data scientist, or developer.
+
+    -   Behavior: Dana often works with large sets of files that have
+          inconsistent naming schemes (e.g., IMG_001.JPG,
+          photo_002.JPG). She needs to normalize them (e.g.,
+          vacation-2024-001.jpg, vacation-2024-002.jpg).
+
+    -   Needs & Goals: Dana needs a tool that is simpler than writing a
+          complex shell script. Her highest priority is safety; she
+          wants to see what changes will be made before they are
+          executed.
+
+8.1.3. Functional Requirements & Acceptance Criteria
+
+  Requirement ID   Feature/Requirement Description   Acceptance Criteria
+  ---------------- --------------------------------- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  FR-REN-01        Argument Parsing                  - MUST accept a SEARCH string and a REPLACE string. - MUST accept an optional file glob pattern (e.g., *.JPG), defaulting to all files (*) in the current directory.
+  FR-REN-02        Dry Run Mode                      - MUST operate in "dry run" mode by default. - In dry run mode, MUST print a list of proposed changes (e.g., IMG_001.JPG -> vacation-001.JPG) to stdout without modifying any files.
+  FR-REN-03        Execution Mode                    - MUST provide an explicit flag (e.g., --execute or --force) to perform the actual renaming operations. - When executed, MUST perform the file system rename operations as previewed in the dry run.
+  FR-REN-04        Error Handling                    - MUST handle file system errors (e.g., permissions) gracefully. - MUST warn the user if a rename operation would result in a name collision and skip that operation.
+
+8.1.4. Non-Functional Requirements (NFRs)
+
+-   NFR-REN-01 (Safety): The default "dry run" behavior is a critical
+      safety feature.
+
+-   NFR-REN-02 (Usability): The output of the dry run must be clear and
+      unambiguous.
+
+-   NFR-REN-03 (Code Size): The implementation must be under 300 LOC.
+
+8.1.5. Out of Scope
+
+-   Regular expression support in search/replace strings.
+
+-   Recursive directory renaming.
+
+-   Complex renaming logic beyond simple substitution.
+
+8.2. User Journey Map
+
+  Code snippet
+
+flowchart TD
+subgraph "Planning & Preview"
+A[Problem: "I have 100 image files to rename."] --> B[Action:
+`batch-rename "IMG_" "vacation-" -- "*.JPG"`]
+B --> C
+C --> D{"Aha!" Moment: "Perfect. I can see exactly what will happen
+before I commit."}
+end
+subgraph "Execution"
+D --> E[Action: `batch-rename "IMG_" "vacation-" -- "*.JPG" --execute`]
+E --> F
+end
+style D fill:#d4edda,stroke:#155724
+
+8.3. Architecture Diagrams
+
+8.3.1. Component Architecture
+
+  Code snippet
+
+graph TD
+subgraph "batch-rename Binary"
+A[Arg Parser] -- "Config (Search, Replace, Glob, Force)" --> B(File
+Scanner)
+B -- "List of files" --> C(Rename Planner)
+C -- "Proposed Changes" --> D{Execution Logic}
+D -- "Dry Run" --> E[Preview Printer]
+D -- "Execute" --> F
+end
+
+8.3.2. Data Flow Diagram
+
+  Code snippet
+
+graph TD
+A[User Command] --> B{Parse args: search, replace, glob, force_flag}
+B --> C{Find files matching glob pattern}
+C --> D{For each file, generate new name}
+D --> E{Check for potential name collisions}
+E --> F{If force_flag is false}
+F --> G[Print "old -> new" to stdout]
+E --> H{If force_flag is true}
+H --> I[Execute `fs::rename`]
+
+8.3.3. Operational Sequence Diagram
+
+  Code snippet
+
+sequenceDiagram
+participant User
+participant batch_rename
+participant FileSystem
+User->>batch_rename: `batch-rename "a" "b" --execute`
+activate batch_rename
+batch_rename->>batch_rename: Parse arguments
+batch_rename->>FileSystem: Read directory contents
+FileSystem-->>batch_rename: Returns list of files
+loop For each file
+batch_rename->>batch_rename: Apply rename logic to generate new name
+alt is --execute flag set?
+batch_rename->>FileSystem: `rename(old_path, new_path)`
+else
+batch_rename->>User: Print `old_path -> new_path`
+end
+end
+deactivate batch_rename
+
+Part 9: htmlq-lite — A CLI HTML Query Tool
+
+This section details htmlq-lite, a lightweight command-line tool for
+extracting content from HTML using CSS selectors, inspired by htmlq.⁵
+
+9.1. Product Requirement Document (PRD)
+
+9.1.1. Objective & Purpose
+
+To provide a simple and fast way to scrape text content from HTML files
+or streams using familiar CSS selector syntax. It's designed for shell
+scripting and quick data extraction tasks.
+
+9.1.2. Target Audience & User Personas
+
+-   Primary Persona: "Simon, the Scraper"
+
+    -   Role: Web developer, data analyst, or hobbyist programmer.
+
+    -   Behavior: Simon often needs to extract specific pieces of
+          information from web pages (e.g., all the headlines from a
+          news site, the prices from a product page). He uses tools like
+          curl to fetch the HTML and needs a simple way to parse it in a
+          pipeline.
+
+    -   Needs & Goals: Simon needs a tool that takes HTML on stdin and a
+          CSS selector as an argument, and prints the matching text
+          content to stdout. He values simplicity over a large feature
+          set.
+
+9.1.3. Functional Requirements & Acceptance Criteria
+
+  Requirement ID   Feature/Requirement Description   Acceptance Criteria
+  ---------------- --------------------------------- -----------------------------------------------------------------------------------------------------------------------------------------------------------
+  FR-HTM-01        Input Handling                    - MUST read HTML content from stdin.
+  FR-HTM-02        Argument Parsing                  - MUST accept exactly one argument: a CSS selector string.
+  FR-HTM-03        Core Logic                        - MUST parse the input HTML. - MUST apply the CSS selector to the parsed document. - For each matching element, MUST extract and print its text content.
+  FR-HTM-04        Output Formatting                 - MUST print the text content of each matching element on a new line to stdout. - MUST strip all HTML tags from the output, printing only the inner text.
+
+9.1.4. Non-Functional Requirements (NFRs)
+
+-   NFR-HTM-01 (Dependencies): Should use a robust HTML parsing and
+      selector library (e.g., scraper).
+
+-   NFR-HTM-02 (Performance): Should be fast enough to not be the
+      bottleneck in a curl |... pipeline.
+
+-   NFR-HTM-03 (Code Size): The implementation must be under 300 LOC.
+
+9.1.5. Out of Scope
+
+-   Extracting element attributes (e.g., the href from an <a> tag).
+
+-   Modifying HTML or complex DOM manipulation.
+
+-   JavaScript execution (it only parses static HTML).
+
+9.2. User Journey Map
+
+  Code snippet
+
+flowchart TD
+subgraph "Data Extraction"
+A[Problem: "I need all the headlines from this webpage."] --> B[Action:
+`curl https://... | htmlq-lite "h2.article-title"`]
+B --> C
+C --> D{"Aha!" Moment: "This is way easier than writing a Python script
+with BeautifulSoup for simple tasks."}
+end
+subgraph "Adoption"
+D --> E[Integration: Uses `htmlq-lite` inside a shell script to automate
+a data gathering task.]
+end
+style D fill:#d4edda,stroke:#155724
+
+9.3. Architecture Diagrams
+
+9.3.1. Component Architecture
+
+  Code snippet
+
+graph TD
+subgraph "htmlq-lite Binary"
+A[Arg Parser] -- "CSS Selector" --> C
+B -- "HTML String" --> C
+C(HTML Parser & Selector Engine) -- "Matching Elements" --> D(Text
+Extractor)
+D -- "Text Content" --> E
+end
+
+9.3.2. Data Flow Diagram
+
+  Code snippet
+
+graph TD
+A[curl output] --> B[stdin]
+B --> C{Read stdin into String}
+C --> D{Parse HTML document}
+D --> E{Apply CSS selector}
+E --> F{For each matched element, extract text}
+F --> G[Print text to stdout]
+
+9.3.3. Operational Sequence Diagram
+
+  Code snippet
+
+sequenceDiagram
+participant User
+participant htmlq_lite
+participant scraper_lib
+User->>htmlq_lite: `curl... | htmlq-lite "selector"`
+activate htmlq_lite
+htmlq_lite->>htmlq_lite: Read HTML from stdin
+htmlq_lite->>scraper_lib: `Html::parse_document(&html)`
+activate scraper_lib
+scraper_lib-->>htmlq_lite: Returns parsed Document
+deactivate scraper_lib
+htmlq_lite->>scraper_lib: `Selector::parse("selector")`
+activate scraper_lib
+scraper_lib-->>htmlq_lite: Returns compiled Selector
+deactivate scraper_lib
+htmlq_lite->>htmlq_lite: `doc.select(&selector)`
+loop For each matching element
+htmlq_lite->>htmlq_lite: Extract text content
+htmlq_lite->>User: Print text to stdout
+end
+deactivate htmlq_lite
+
+Part 10: clock-cli — A Digital Clock for the Terminal
+
+This section details clock-cli, a simple application to display a
+continuously updating digital clock in the terminal, an idea inspired by
+beginner-friendly projects.
+
+10.1. Product Requirement Document (PRD)
+
+10.1.1. Objective & Purpose
+
+To provide a visually pleasing, simple, and continuously updating
+digital clock in the command line. It serves as an excellent learning
+project for handling terminal control, threading, and time.
+
+10.1.2. Target Audience & User Personas
+
+-   Primary Persona: "Terry, the Terminal Tinkerer"
+
+    -   Role: Developer, student, or CLI enthusiast.
+
+    -   Behavior: Terry enjoys having useful and aesthetic tools running
+          in their terminal multiplexer (like tmux or zellij). They
+          might want a persistent clock in one of the panes.
+
+    -   Needs & Goals: Terry needs a lightweight program that can be run
+          and left in the background to display the current time without
+          consuming significant resources.
+
+10.1.3. Functional Requirements & Acceptance Criteria
+
+  Requirement ID   Feature/Requirement Description   Acceptance Criteria
+  ---------------- --------------------------------- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  FR-CLK-01        Time Display                      - MUST display the current time in HH:MM:SS format.
+  FR-CLK-02        Continuous Update                 - The displayed time MUST update every second. - The update MUST happen in-place in the terminal, without printing a new line for each update. This requires clearing the screen or moving the cursor.
+  FR-CLK-03        Clean Exit                        - The program MUST exit gracefully when the user sends an interrupt signal (Ctrl-C). - Upon exit, the program MUST restore the cursor and clear any artifacts it created.
+  FR-CLK-04        Date Display                      - MUST include an optional flag (e.g., -d or --show-date) to also display the current date.
+
+10.1.4. Non-Functional Requirements (NFRs)
+
+-   NFR-CLK-01 (Resource Usage): Must have low CPU and memory usage, as
+      it's intended to be a long-running process.
+
+-   NFR-CLK-02 (Dependencies): Should use minimal dependencies,
+      potentially one for time and one for terminal control (e.g.,
+      crossterm).
+
+-   NFR-CLK-03 (Code Size): The implementation must be under 300 LOC.
+
+10.1.5. Out of Scope
+
+-   Timezone selection or configuration.
+
+-   Alarms, timers, or stopwatch functionality.
+
+-   Customizable display formats or colors.
+
+10.2. User Journey Map
+
+  Code snippet
+
+flowchart TD
+subgraph "Setup & Use"
+A[Problem: "I want a simple clock in my terminal pane."] --> B[Action:
+`cargo install clock-cli`]
+B --> C[Execution: `clock-cli`]
+C --> D
+end
+subgraph "Satisfaction"
+D --> E{"Aha!" Moment: "This is a neat, simple utility that does exactly
+what I wanted."}
+E --> F[Habit: Leaves `clock-cli` running in a dedicated `tmux` pane.]
+end
+style E fill:#d4edda,stroke:#155724
+
+10.3. Architecture Diagrams
+
+10.3.1. Component Architecture
+
+  Code snippet
+
+graph TD
+subgraph "clock-cli Binary"
+A -- "Spawns" --> B(Update Loop Thread)
+A -- "Handles" --> C[Ctrl-C Handler]
+B -- "Every second" --> D(Time Fetcher)
+D -- "Current Time" --> E(Terminal Renderer)
+E -- "Draws to" --> F((Terminal))
+end
+
+10.3.2. Data Flow Diagram
+
+  Code snippet
+
+graph TD
+A --> B{Initialize Terminal}
+B --> C{Start update loop}
+subgraph "Loop every 1 second"
+C --> D{Get current system time}
+D --> E{Format time into a string}
+E --> F{Clear previous output & print new string}
+F --> C
+end
+G --> H{Cleanup Terminal & Exit}
+
+10.3.3. Operational Sequence Diagram
+
+  Code snippet
+
+sequenceDiagram
+participant User
+participant clock_cli
+participant Terminal
+User->>clock_cli: `clock-cli`
+activate clock_cli
+clock_cli->>Terminal: Hide cursor, enter alternate screen
+loop Every 1 second
+clock_cli->>clock_cli: Get current time
+clock_cli->>clock_cli: Format time string
+clock_cli->>Terminal: Move cursor to top-left, clear line
+clock_cli->>Terminal: Print formatted time
+clock_cli->>clock_cli: sleep(1 second)
+end
+User->>clock_cli: Ctrl-C
+clock_cli->>Terminal: Show cursor, leave alternate screen
+clock_cli->>User: Exit
+deactivate clock_cli
+
+Conclusion and Strategic Recommendations
+
+Summary of Patterns
+
+The detailed analysis of these ten distinct projects reveals recurring
+architectural patterns tailored to their specific use cases. For the
+command-line interface (CLI) tools (subst, json-fmt, line-count,
+md-to-ansi, batch-rename, htmlq-lite, clock-cli), a consistent
+three-stage pipeline architecture emerges: 1. Parse Arguments, 2.
+Process Data/Stream, and 3. Format Output. This model proves effective
+for tools that conform to the Unix philosophy of doing one thing well.
+
+For the ansi-strip library crate, the architectural focus shifts from
+I/O pipelines to the public API contract. The primary pattern is the
+exposure of a minimal, well-documented API surface that hides a more
+complex internal implementation.
+
+Finally, for the procedural macros (StructNew, cfg-alias), the
+architecture is defined by the compiler's metaprogramming hooks. The
+pattern is a robust TokenStream-to-TokenStream transformation, heavily
+reliant on the syn and quote crates to parse the input Rust code into an
+Abstract Syntax Tree (AST) and generate new, valid Rust code as output.
+
+Implementation Priority
+
+Based on an assessment of complexity and the progressive introduction of
+core Rust concepts, the following implementation order is recommended.
+This path allows for a gradual increase in difficulty, providing a
+structured learning curve.
+
+1.  subst: The most straightforward project, focusing on fundamental
+      Rust concepts like argument parsing and basic, line-by-line I/O.
+
+2.  line-count: Introduces simple state management (the counters) and
+      more nuanced string processing logic.
+
+3.  json-fmt: Adds the complexity of managing external dependencies
+      (serde_json) and handling more structured, multi-faceted errors
+      from a third-party library.
+
+4.  ansi-strip: Shifts the focus to library design principles,
+      zero-dependency code, and the implementation of a formal algorithm
+      (a state machine).
+
+5.  StructNew: A good introduction to procedural macros, focusing on
+      struct field iteration.
+
+6.  clock-cli: Introduces terminal control, threading, and event
+      handling (Ctrl-C).
+
+7.  htmlq-lite: Builds on the json-fmt pattern but with a more complex
+      parsing library (scraper).
+
+8.  batch-rename: Focuses on file system interaction and the importance
+      of safe "dry run" modes.
+
+9.  md-to-ansi: Combines file/stream processing with a more complex,
+      stateful rendering logic based on a token stream from a parser.
+
+10. cfg-alias: The most complex macro project, requiring advanced
+      parsing and code rewriting logic.
+
+This consolidated document will be expanded in future iterations to
+include the remaining projects listed in the index.
+
+Works cited
+
+1.  Mapping the developer journey, accessed on August 9, 2025,
+      https://developerrelations.com/guides/mapping-the-developer-journey/
+
+2.  Getting Started - Mermaid Chart, accessed on August 9, 2025,
+      https://docs.mermaidchart.com/mermaid-oss/intro/getting-started.html
+
+3.  mermaid-js/mermaid: Generation of diagrams like flowcharts or
+      sequence diagrams from text in a similar manner as markdown -
+      GitHub, accessed on August 9, 2025,
+      https://github.com/mermaid-js/mermaid
+
+4.  sts10/rust-command-line-utilities: A curated list of command ... -
+      GitHub, accessed on August 9, 2025,
+      https://github.com/sts10/rust-command-line-utilities
+
+5.  Mapping the developer journey - Developer Relations, accessed on
+      August 9, 2025,
+      https://developerrelations.com/guides/mapping-the-developer-journey
+
+6.  A curated list of command-line utilities written in Rust - GitHub
+      Gist, accessed on August 9, 2025,
+      https://gist.github.com/sts10/daadbc2f403bdffad1b6d33aff016c0a
+
+7.  Writing command line utilities in Rust - Tonsser Tech Blog, accessed
+      on August 9, 2025,
+      https://techblog.tonsser.com/posts/writing-command-line-utilities-in-rust
+
+8.  Guide to Rust procedural macros | developerlife.com, accessed on
+      August 9, 2025,
+      https://developerlife.com/2022/03/30/rust-proc-macro/
+
+9.  Mermaid FlowChart Basic Syntax - Mermaid Chart - Create complex ...,
+      accessed on August 9, 2025,
+      https://mermaid.js.org/syntax/flowchart.html
+
+10. my-rust-lists/rust-project-ideas.md at master - GitHub, accessed on
+      August 9, 2025,
+      https://github.com/brson/my-rust-lists/blob/master/rust-project-ideas.md
+
+11. Product Requirements Document Template - PRD Template | Slite.com,
+      accessed on August 9, 2025,
+      https://slite.com/templates/product-requirements-document
+
+12. Free Product Requirement Document Templates | Smartsheet, accessed
+      on August 9, 2025,
+      https://www.smartsheet.com/content/free-product-requirements-document-template

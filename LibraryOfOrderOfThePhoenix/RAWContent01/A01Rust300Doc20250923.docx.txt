@@ -1,0 +1,11 @@
+﻿List of links to browse
+
+
+
+
+* https://platform.parallel.ai/shared/deep-research/d7e1795f-f0b0-41bb-ab33-fae58167891a
+* https://platform.parallel.ai/shared/deep-research/c7c441d5-2b61-41ba-81e4-37bf062356be
+* https://platform.parallel.ai/shared/deep-research/eb08a795-670f-4273-9a1b-a88b2e0d1067
+* https://platform.parallel.ai/shared/deep-research/d7de26ac-e8ba-4877-a6b5-636f1dad7e48 100 line crates
+   * Micro crates should be no-std by default
+* trun_c30434831bfd40abad60893b9aa5c659 (copy).txt  for user journeys
