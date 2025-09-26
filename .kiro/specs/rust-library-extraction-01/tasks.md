@@ -205,7 +205,7 @@
   - [x] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt: chunk 2 (lines 701-1700)
   - [x] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt: chunk 3 (lines 1401-2400)
   - [x] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt: chunk 4 (lines 2101-3100)
-  - [ ] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt: chunk 5 (lines 2801-3800)
+  - [x] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt: chunk 5 (lines 2801-3800)
   - [ ] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt: chunk 6 (lines 3501-4500)
   - [ ] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt: chunk 7 (lines 4201-5200)
   - [ ] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt: chunk 8 (lines 4901-5900)
