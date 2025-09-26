@@ -13,17 +13,17 @@
 
 # It is time to get the best insights for PMF - ONBV : om namo bhagvate vasudevaya
 
-- [-] 2. Process A Files (5 files)
+- [x] 2. Process A Files (5 files)
   - [x] 2.1 Analyze A01-README-MOSTIMP.txt: chunk 1 (lines 1-46)
   - [x] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 1 (lines 1-1000)
-  - [-] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 2 (lines 701-1700)
-  - [ ] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 3 (lines 1401-2400)
-  - [ ] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 4 (lines 2101-3100)
-  - [ ] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 5 (lines 2801-3800)
-  - [ ] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 6 (lines 3501-4500)
-  - [ ] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 7 (lines 4201-4829)
-  - [ ] 2.3 Analyze A01Rust300Doc20250923.docx.txt: chunk 1 (lines 1-10)
-  - [ ] 2.4 Analyze abc.txt: chunk 1 (lines 1-40)
+  - [x] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 2 (lines 701-1700)
+  - [x] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 3 (lines 1401-2400)
+  - [x] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 4 (lines 2101-3100)
+  - [x] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 5 (lines 2801-3800)
+  - [x] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 6 (lines 3501-4500)
+  - [x] 2.2 Analyze A01Rust300Doc20250923.docx.md: chunk 7 (lines 4201-4829)
+  - [x] 2.3 Analyze A01Rust300Doc20250923.docx.txt: chunk 1 (lines 1-10)
+  - [x] 2.4 Analyze abc.txt: chunk 1 (lines 1-40)
 
 - [ ] 3. Process B Files (1 file)
   - [ ] 3.1 Analyze Bullet-Proof Mermaid Prompts_ Square-Perfect Diagrams from Any LLM.txt: chunk 1 (lines 1-387)
