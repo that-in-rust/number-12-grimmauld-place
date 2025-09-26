@@ -152,12 +152,4 @@ For each file analysis task:
 5. Ensure uniqueness validation against existing entries
 6. Update progress in alphabetical-file-tracker.md
 
-**Total Tasks**: 17 main tasks covering 93 files + consolidation
-1. Apply superintelligence framework with expert council activation
-2. Extract library opportunities using 23-metric PMF evaluation
-3. Use Harry Potter names for library opportunities
-4. Add entries to LibraryOfOrderOfThePhoenix/insights-rust-library-extraction-01.md
-5. Ensure uniqueness validation against existing entries
-6. Update progress in alphabetical-file-tracker.md
-
 **Total Tasks**: 16 main tasks covering 93 files + consolidation
