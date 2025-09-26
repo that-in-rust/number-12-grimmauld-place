@@ -94,7 +94,7 @@
   - [x] 12.6 Analyze Rust30020250815_minto.txt: chunk 1 (lines 1-124)
   - [x] 12.7 Analyze Rust30020250815.txt: chunk 1 (lines 1-119)
   - [x] 12.8 Analyze Rust300AB20250926.md: chunk 1 (lines 1-1000)
-  - [ ] 12.8 Analyze Rust300AB20250926.md: chunk 2 (lines 701-1700)
+  - [-] 12.8 Analyze Rust300AB20250926.md: chunk 2 (lines 701-1700)
   - [ ] 12.8 Analyze Rust300AB20250926.md: chunk 3 (lines 1401-2400)
   - [ ] 12.8 Analyze Rust300AB20250926.md: chunk 4 (lines 2101-3100)
   - [ ] 12.8 Analyze Rust300AB20250926.md: chunk 5 (lines 2801-3800)
@@ -200,7 +200,7 @@
   - [ ] 12.30 Analyze Rust Patterns List.txt: chunk 1 (lines 1-1000)
   - [ ] 12.30 Analyze Rust Patterns List.txt: chunk 2 (lines 701-1112)
 
-- [x] 13. Process S Files (1 file)
+- [ ] 13. Process S Files (1 file)
   - [x] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt: chunk 1 (lines 1-1000)
   - [x] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt: chunk 2 (lines 701-1700)
   - [x] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt: chunk 3 (lines 1401-2400)
@@ -234,7 +234,7 @@
   - [ ] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt: chunk 31 (lines 21001-22000)
   - [ ] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt: chunk 32 (lines 21701-22271)
 
-- [-] 14. Process T Files (34 files)
+- [ ] 14. Process T Files (34 files)
   - [x] 14.1 Analyze tasks.txt: chunk 1 (lines 1-231)
   - [x] 14.2 Analyze task-tracker.txt: chunk 1 (lines 1-430)
   - [ ] 14.3 Analyze tokio-rs-axum-8a5edab282632443.txt: chunk 1 (lines 1-1000)
