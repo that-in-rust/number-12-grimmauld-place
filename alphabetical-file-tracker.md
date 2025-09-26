@@ -160,5 +160,10 @@
 2. Apply 1000-line chunks with 300-line overlap for each file
 3. Use superintelligence framework with expert council activation
 4. Extract library opportunities using 23-metric PMF evaluation
-5. Update master catalog with unique entries only
+5. Update LibraryOfOrderOfThePhoenix/insights-rust-library-extraction-01.md with unique entries only
 6. Check off each file as completed for systematic progress tracking
+
+## Output Location
+**Final Results**: LibraryOfOrderOfThePhoenix/insights-rust-library-extraction-01.md
+**Progress Tracking**: This file (alphabetical-file-tracker.md)
+**Spec Documents**: .kiro/specs/rust-library-extraction-01/
