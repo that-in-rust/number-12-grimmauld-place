@@ -234,8 +234,8 @@
   - [ ] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt: chunk 31 (lines 21001-22000)
   - [ ] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt: chunk 32 (lines 21701-22271)
 
-- [ ] 14. Process T Files (34 files)
-  - [ ] 14.1 Analyze tasks.txt: chunk 1 (lines 1-231)
+- [-] 14. Process T Files (34 files)
+  - [-] 14.1 Analyze tasks.txt: chunk 1 (lines 1-231)
   - [ ] 14.2 Analyze task-tracker.txt: chunk 1 (lines 1-430)
   - [ ] 14.3 Analyze tokio-rs-axum-8a5edab282632443.txt: chunk 1 (lines 1-1000)
   - [ ] 14.3 Analyze tokio-rs-axum-8a5edab282632443.txt: chunk 2 (lines 701-1700)
