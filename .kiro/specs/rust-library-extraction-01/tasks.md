@@ -25,8 +25,8 @@
   - [x] 2.3 Analyze A01Rust300Doc20250923.docx.txt: chunk 1 (lines 1-10)
   - [x] 2.4 Analyze abc.txt: chunk 1 (lines 1-40)
 
-- [ ] 3. Process B Files (1 file)
-  - [ ] 3.1 Analyze Bullet-Proof Mermaid Prompts_ Square-Perfect Diagrams from Any LLM.txt: chunk 1 (lines 1-387)
+- [-] 3. Process B Files (1 file)
+  - [-] 3.1 Analyze Bullet-Proof Mermaid Prompts_ Square-Perfect Diagrams from Any LLM.txt: chunk 1 (lines 1-387)
 
 - [ ] 4. Process D Files (3 files)
   - [ ] 4.1 Analyze DeconstructDeb_trun_c928898c8ef7483eadc3541123e5d88f.txt: chunk 1 (lines 1-1000)
