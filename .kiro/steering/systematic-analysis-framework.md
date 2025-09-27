@@ -60,6 +60,49 @@ This steering document establishes a systematic approach for extracting comprehe
 
 ## Task Breakdown Patterns
 
+### Meta-Pattern: Hierarchical Task Organization for Complex Projects
+
+**Principle**: Maintain granular task detail while reducing cognitive load through strategic grouping.
+
+**Problem Solved**: Large projects with hundreds of granular tasks become overwhelming to navigate and execute, leading to analysis paralysis and poor progress tracking.
+
+**Solution Framework**:
+- **Preserve Granularity**: Keep all detailed sub-tasks for thorough execution
+- **Reduce High-Level Buttons**: Group related tasks under fewer main categories
+- **Logical Organization**: Use natural groupings (alphabetical, functional, chronological)
+- **Clear Hierarchy**: Main tasks contain numbered sub-tasks for easy navigation
+
+**Implementation Pattern**:
+```
+- [ ] Main Task Group (X items)
+  - [ ] X.1 Specific granular task
+  - [ ] X.2 Another specific granular task
+  - [ ] X.3 Final specific granular task
+```
+
+**Example Application - File Processing**:
+```
+- [ ] 2. Process A Files (5 files)
+  - [ ] 2.1 Analyze A01-README-MOSTIMP.txt
+  - [ ] 2.2 Analyze A01Rust300Doc20250923.docx.md
+  - [ ] 2.3 Analyze A01Rust300Doc20250923.docx.txt
+  - [ ] 2.4 Analyze Aadeesh Patni.txt
+  - [ ] 2.5 Analyze abc.txt
+```
+
+**Benefits**:
+- **Reduced Overwhelm**: 17 main buttons instead of 93+ individual tasks
+- **Maintained Detail**: Every granular task preserved for systematic execution
+- **Progress Clarity**: Clear completion tracking at both levels
+- **Logical Flow**: Natural groupings make execution order obvious
+- **Scalability**: Pattern works for projects of any size
+
+**When to Apply**:
+- Projects with 50+ granular tasks
+- Natural groupings exist (alphabetical, functional, temporal)
+- Need to balance thoroughness with usability
+- Multiple stakeholders need different levels of detail
+
 ### Pattern 1: Systematic Processing Tasks
 
 **Structure**: Break large processing jobs into measurable, trackable units
