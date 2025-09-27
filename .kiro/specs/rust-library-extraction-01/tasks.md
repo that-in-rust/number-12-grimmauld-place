@@ -121,7 +121,7 @@
   - [x] 12.8 Analyze Rust300AB20250926.md: chunk 9 (lines 5601-6600)
   - [x] 12.8 Analyze Rust300AB20250926.md: chunk 10 (lines 6301-7300)
   - [x] 12.8 Analyze Rust300AB20250926.md: chunk 11 (lines 7001-8000)
-  - [ ] 12.8 Analyze Rust300AB20250926.md: chunk 12 (lines 7701-8700)
+  - [-] 12.8 Analyze Rust300AB20250926.md: chunk 12 (lines 7701-8700)
   - [ ] 12.8 Analyze Rust300AB20250926.md: chunk 13 (lines 8401-9400)
   - [ ] 12.8 Analyze Rust300AB20250926.md: chunk 14 (lines 9101-10100)
   - [ ] 12.8 Analyze Rust300AB20250926.md: chunk 15 (lines 9801-10800)
