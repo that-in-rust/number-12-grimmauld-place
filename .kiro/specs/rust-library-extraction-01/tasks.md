@@ -131,9 +131,9 @@
   - [x] 15.2 Analyze UnpackKiro_Unpack With Confidence_ A Secure, Streaming-Fast Deep-Dive into Kiro's.deb.txt
   - [x] 15.3 Analyze use-case-202509 (1).txt
 
-- [-] 16. Process W Files (2 files)
-  - [-] 16.1 Analyze workflow_patterns.txt
-  - [ ] 16.2 Analyze WORKFLOW_TEMPLATES.txt
+- [x] 16. Process W Files (2 files)
+  - [x] 16.1 Analyze workflow_patterns.txt
+  - [x] 16.2 Analyze WORKFLOW_TEMPLATES.txt
 
 - [ ] 17. Final Consolidation and Quality Assurance
   - [ ] 17.1 Review LibraryOfOrderOfThePhoenix/insights-rust-library-extraction-01.md for duplicates
