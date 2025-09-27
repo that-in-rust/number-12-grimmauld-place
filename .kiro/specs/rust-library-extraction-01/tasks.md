@@ -114,8 +114,8 @@
     - Update consolidated master catalog with new insights
     - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 3.1, 3.2, 6.1, 6.2, 7.1, 7.2_
   - [x] 12.8 Analyze Rust300AB20250926.md: chunk 4 (lines 2101-3100)
-  - [-] 12.8 Analyze Rust300AB20250926.md: chunk 5 (lines 2801-3800)
-  - [ ] 12.8 Analyze Rust300AB20250926.md: chunk 6 (lines 3501-4500)
+  - [x] 12.8 Analyze Rust300AB20250926.md: chunk 5 (lines 2801-3800)
+  - [-] 12.8 Analyze Rust300AB20250926.md: chunk 6 (lines 3501-4500)
   - [ ] 12.8 Analyze Rust300AB20250926.md: chunk 7 (lines 4201-5200)
   - [ ] 12.8 Analyze Rust300AB20250926.md: chunk 8 (lines 4901-5900)
   - [ ] 12.8 Analyze Rust300AB20250926.md: chunk 9 (lines 5601-6600)
