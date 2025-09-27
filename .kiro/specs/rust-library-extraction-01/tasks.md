@@ -53,7 +53,7 @@
   - [x] 11.3 Analyze PARSELTONGUE_V2_RECOMMENDATIONS.txt
   - [x] 11.4 Analyze PRDsRust300p1.txt
 
-- [-] 12. Process R Files (30 files)
+- [ ] 12. Process R Files (30 files)
   - [x] 12.1 Analyze README.txt
   - [x] 12.2 Analyze Reference Conversation.txt
   - [x] 12.3 Analyze Researchv1..txt
@@ -131,8 +131,8 @@
   - [x] 15.2 Analyze UnpackKiro_Unpack With Confidence_ A Secure, Streaming-Fast Deep-Dive into Kiro's.deb.txt
   - [x] 15.3 Analyze use-case-202509 (1).txt
 
-- [ ] 16. Process W Files (2 files)
-  - [ ] 16.1 Analyze workflow_patterns.txt
+- [-] 16. Process W Files (2 files)
+  - [-] 16.1 Analyze workflow_patterns.txt
   - [ ] 16.2 Analyze WORKFLOW_TEMPLATES.txt
 
 - [ ] 17. Final Consolidation and Quality Assurance
