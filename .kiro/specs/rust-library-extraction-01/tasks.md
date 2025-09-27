@@ -21,7 +21,7 @@
 - [ ] 3. Process B Files (1 file)
   - [ ] 3.1 Analyze Bullet-Proof Mermaid Prompts_ Square-Perfect Diagrams from Any LLM.txt
 
-- [ ] 4. Process D Files (3 files)
+- [-] 4. Process D Files (3 files)
   - [ ] 4.1 Analyze DeconstructDeb_trun_c928898c8ef7483eadc3541123e5d88f.txt
   - [ ] 4.2 Analyze DeconstructDebZero-Trust.deb Dissection_ A Rust Toolchain for Safe, Deep-Dive Package Analysis.txt
   - [ ] 4.3 Analyze design.txt
