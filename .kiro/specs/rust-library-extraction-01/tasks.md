@@ -88,7 +88,7 @@
 - [x] 13. Process S Files (1 file)
   - [x] 13.1 Analyze Shared Research - Parallel Web Systems, Inc..txt
 
-- [-] 14. Process T Files (34 files)
+- [ ] 14. Process T Files (34 files)
   - [x] 14.1 Analyze tasks.txt
   - [x] 14.2 Analyze task-tracker.txt
   - [x] 14.3 Analyze tokio-rs-axum-8a5edab282632443.txt
@@ -106,7 +106,7 @@
   - [x] 14.15 Analyze trun_c928898c8ef7483e893944f08945f3a3.txt
   - [x] 14.16 Analyze trun_c928898c8ef7483ea7128f70251c9860.txt
   - [x] 14.17 Analyze trun_c928898c8ef7483eb1a233d6dc8501f8.txt
-  - [ ] 14.18 Analyze trun_d3115feeb76d407d8a22aec5ca6ffa26.json
+  - [x] 14.18 Analyze trun_d3115feeb76d407d8a22aec5ca6ffa26.json
   - [ ] 14.19 Analyze trun_d3115feeb76d407d8d2e6a5293afb28d.json
   - [ ] 14.20 Analyze trun_d3115feeb76d407db7f7be20d7602124.json
   - [ ] 14.21 Analyze trun_d3115feeb76d407dbe3a09f93b0d880d.json
@@ -126,7 +126,7 @@
   - [ ] 14.35 Analyze trun_f92ce0b9ccf14586b67676d6d94d7362.json
   - [ ] 14.36 Analyze trun_f92ce0b9ccf14586bc02b7d9ef19971d.json
 
-- [-] 15. Process U Files (3 files)
+- [ ] 15. Process U Files (3 files)
   - [x] 15.1 Analyze UnpackKiro_trun_c928898c8ef7483eace3078d9b2f944e.txt
   - [-] 15.2 Analyze UnpackKiro_Unpack With Confidence_ A Secure, Streaming-Fast Deep-Dive into Kiro's.deb.txt
   - [ ] 15.3 Analyze use-case-202509 (1).txt
