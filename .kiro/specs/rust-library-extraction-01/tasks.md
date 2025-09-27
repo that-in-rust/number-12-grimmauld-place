@@ -18,8 +18,8 @@
   - [x] 2.4 Analyze Aadeesh Patni.txt
   - [x] 2.5 Analyze abc.txt
 
-- [ ] 3. Process B Files (1 file)
-  - [ ] 3.1 Analyze Bullet-Proof Mermaid Prompts_ Square-Perfect Diagrams from Any LLM.txt
+- [x] 3. Process B Files (1 file)
+  - [x] 3.1 Analyze Bullet-Proof Mermaid Prompts_ Square-Perfect Diagrams from Any LLM.txt
 
 - [x] 4. Process D Files (3 files)
   - [x] 4.1 Analyze DeconstructDeb_trun_c928898c8ef7483eadc3541123e5d88f.txt
