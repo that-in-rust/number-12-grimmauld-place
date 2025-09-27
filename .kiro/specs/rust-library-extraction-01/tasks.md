@@ -134,7 +134,7 @@
   - [x] 12.10 Analyze Rust300 Rust CPU Library Idea Generation.txt: chunk 1 (lines 1-1000)
   - [x] 12.10 Analyze Rust300 Rust CPU Library Idea Generation.txt: chunk 2 (lines 701-1588)
   - [x] 12.11 Analyze Rust300 Rust Library Idea Generation.txt: chunk 1 (lines 1-125)
-  - [ ] 12.12 Analyze Rust300 Rust Micro-Libraries for CPU-Intensive Tasks.txt: chunk 1 (lines 1-1000)
+  - [-] 12.12 Analyze Rust300 Rust Micro-Libraries for CPU-Intensive Tasks.txt: chunk 1 (lines 1-1000)
   - [ ] 12.12 Analyze Rust300 Rust Micro-Libraries for CPU-Intensive Tasks.txt: chunk 2 (lines 701-1253)
   - [ ] 12.13 Analyze Rust300 Rust Micro-Library Idea Generation.txt: chunk 1 (lines 1-456)
   - [ ] 12.14 Analyze Rust300 Rust OSS Project Planning.txt: chunk 1 (lines 1-749)
