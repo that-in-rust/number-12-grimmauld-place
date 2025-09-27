@@ -94,8 +94,8 @@
   - [x] 14.3 Analyze tokio-rs-axum-8a5edab282632443.txt
   - [x] 14.4 Analyze Tokio's 20%_ High-Leverage Idioms that Eliminate Bugs and Turbo-Charge Rust Async Apps.txt
   - [x] 14.5 Analyze trun_1b986480e1c84d75a6ad29b1d72efff6.json
-  - [ ] 14.6 Analyze trun_1b986480e1c84d75b02b7fba69f359c9.json
-  - [ ] 14.7 Analyze trun_1b986480e1c84d75bc94381ba6d21189.json
+  - [x] 14.6 Analyze trun_1b986480e1c84d75b02b7fba69f359c9.json
+  - [x] 14.7 Analyze trun_1b986480e1c84d75bc94381ba6d21189.json
   - [ ] 14.8 Analyze trun_82b88932a051498485c362bd64070533.json
   - [ ] 14.9 Analyze trun_82b88932a0514984938aec7b95fbee66.json
   - [ ] 14.10 Analyze trun_82b88932a0514984a4fd517f37b144be.json
