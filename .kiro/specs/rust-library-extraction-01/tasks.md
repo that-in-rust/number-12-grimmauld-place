@@ -126,9 +126,9 @@
   - [ ] 14.35 Analyze trun_f92ce0b9ccf14586b67676d6d94d7362.json
   - [ ] 14.36 Analyze trun_f92ce0b9ccf14586bc02b7d9ef19971d.json
 
-- [ ] 15. Process U Files (3 files)
-  - [ ] 15.1 Analyze UnpackKiro_trun_c928898c8ef7483eace3078d9b2f944e.txt
-  - [ ] 15.2 Analyze UnpackKiro_Unpack With Confidence_ A Secure, Streaming-Fast Deep-Dive into Kiro's.deb.txt
+- [-] 15. Process U Files (3 files)
+  - [x] 15.1 Analyze UnpackKiro_trun_c928898c8ef7483eace3078d9b2f944e.txt
+  - [-] 15.2 Analyze UnpackKiro_Unpack With Confidence_ A Secure, Streaming-Fast Deep-Dive into Kiro's.deb.txt
   - [ ] 15.3 Analyze use-case-202509 (1).txt
 
 - [ ] 16. Process W Files (2 files)
