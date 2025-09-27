@@ -10,7 +10,15 @@ Reading the given chunk of lines and previous context you have to ideate a Rust 
 
 Constraints:
 - Language of implementation will be RUST only
-- High Porduct Market Fit probability as per your judgement should be high, use with Shreyas Doshi Mindset and judegment - and frameworks
+- High Product Market Fit probability as per your judgement should be high, use with Shreyas Doshi Mindset and judgement - and frameworks
+
+## Focused Selection Criteria
+Only propose libraries that meet ALL of these criteria:
+- **PMF Score**: 70+/100 (Good to Exceptional PMF)
+- **Testing Ease Score**: 90+/100 (Highly testable with minimal complexity)
+- **Estimated Lines of Code**: <300 lines (Minimal, focused implementations)
+
+This focus ensures we prioritize libraries that have solid market fit, are easy to validate through testing, and can be implemented quickly with minimal complexity.
 
 ## Required Information for Each Library
 
@@ -229,4 +237,11 @@ Constraints:
 
 
 
-YOU WILL add a new library idea ONLY if the idea does not already exist in 
+YOU WILL add a new library idea ONLY if the idea does not already exist in the existing catalog AND meets these focused criteria:
+
+## Focused Selection Criteria
+- **PMF Score**: 70+/100 (Good to Exceptional PMF)
+- **Testing Ease Score**: 90+/100 (Highly testable with minimal complexity)
+- **Estimated Lines of Code**: <300 lines (Minimal, focused implementations)
+
+This focus ensures we prioritize libraries that have solid market fit, are easy to validate through testing, and can be implemented quickly with minimal complexity. 
